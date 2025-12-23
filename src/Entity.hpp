@@ -3,7 +3,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "Tilemap.hpp"
-
+#include "DeltaTime.hpp"
 
 class Tilemap; // Yes compiler, there IS a class called Tilemap.
 
@@ -46,16 +46,17 @@ public:
 
     void move(Tilemap &tilemap){
 		if(movement == sf::Vector2f(0.f,0.f)) return;
+		sf::Vector2f movementCompensated = movement * DeltaTime::get();
 		
-		if( !testCollision( tilemap, position + sf::Vector2f(movement.x,0.f) ) ){
-			position.x += movement.x;
+		if( !testCollision( tilemap, position + sf::Vector2f(movementCompensated.x,0.f) ) ){
+			position.x += movementCompensated.x;
 			recenterBoundingBox();
 		}else{
 			movement.x = 0.f;
 		}
 		
-		if( !testCollision( tilemap,position + sf::Vector2f(0.f,movement.y) ) ){
-			position.y += movement.y;
+		if( !testCollision( tilemap,position + sf::Vector2f(0.f,movementCompensated.y) ) ){
+			position.y += movementCompensated.y;
 			recenterBoundingBox();
 		}else{
 			movement.y = 0.f;
