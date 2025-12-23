@@ -70,6 +70,7 @@ public:
 // Private Methods
 ////////////////////////////////////////////////////////////////////////////////
 
+// helper function to change a given inventory slot
 inline void Inventory::changeInventorySlot(int pos, AddRemove ar, Item item) {
 
   int starting_index = VertexArrayIndexFromPosition(pos);
@@ -96,6 +97,8 @@ inline void Inventory::changeInventorySlot(int pos, AddRemove ar, Item item) {
   }
 }
 
+// Translates an array position in inventory or slot_filled
+// into the starting vertex in array
 inline int Inventory::VertexArrayIndexFromPosition(int pos) {
   int index_start = (SLOTS + 1) * 6;
   int index = pos * 6 + index_start;
@@ -246,18 +249,23 @@ inline Inventory::~Inventory() {
   // idk, I'm not using pointers ..
 }
 
+// returns the bool if the inventory is open
 inline bool Inventory::isOpen() { return open; }
 
+// Toggles the displaying of the inventory screen
 inline void Inventory::toggleOpen() { open ^= 1; }
 
+// Gets the vertex array
 inline sf::VertexArray Inventory::getArray() { return array; }
 
+// Draws the inventory
 inline void Inventory::draw(sf::RenderWindow &window) {
   if (open) {
     window.draw(array);
   }
 }
 
+// Insert item at position
 inline void Inventory::insertItem(int pos, Item item) {
   if (pos < 0 || pos > SLOTS) {
     return;
@@ -267,6 +275,7 @@ inline void Inventory::insertItem(int pos, Item item) {
   changeInventorySlot(pos, ADD, item);
 }
 
+// Remove item at position
 inline void Inventory::removeItem(int pos) {
   if (pos < 0 || pos > SLOTS) {
     return;
