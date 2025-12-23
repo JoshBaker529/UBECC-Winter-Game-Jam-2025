@@ -51,6 +51,7 @@ private:
 
   void changeInventorySlot(int, AddRemove, Item = Item());
   int VertexArrayIndexFromPosition(int);
+  int getFirstFreeSlot();
 
 public:
   Inventory(sf::Vector2f);
@@ -60,6 +61,7 @@ public:
   sf::VertexArray getArray();
   void insertItem(int, Item);
   void removeItem(int);
+  void addItem(Item);
 
   void draw(sf::RenderWindow &);
 };
@@ -98,6 +100,17 @@ inline int Inventory::VertexArrayIndexFromPosition(int pos) {
   int index_start = (SLOTS + 1) * 6;
   int index = pos * 6 + index_start;
   return index;
+}
+
+// Retrieves the index of first slot that doesn't have an item
+// Returns -1 if no empty slot
+inline int Inventory::getFirstFreeSlot() {
+  for (int i = 0; i < SLOTS; i++) {
+    if (!slot_filled[i]) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -261,4 +274,15 @@ inline void Inventory::removeItem(int pos) {
   slot_filled[pos] = false;
   inventory[pos] = Item();
   changeInventorySlot(pos, REMOVE);
+}
+
+// Generic add item to inventory
+// Equivalent to InsertItem(int, Item)
+// Where int is the first open slot;
+inline void Inventory::addItem(Item item) {
+  int pos = getFirstFreeSlot();
+  if (pos < 0) {
+    return;
+  }
+  insertItem(pos, item);
 }
