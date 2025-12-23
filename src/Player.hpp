@@ -2,6 +2,7 @@
 #define PLAYER_HPP
 
 #include "Controls.hpp"
+#include "DeltaTime.hpp"
 #include "Entity.hpp"
 #include "Tilemap.hpp"
 
@@ -14,7 +15,8 @@ public:
 	Player(): Entity(sf::Vector2f(0,0), sf::Vector2f(31,31)) {}
 
 	virtual void step(sf::RenderWindow &window, sf::View &view, Tilemap &tilemap){
-		const float momentum = 0.5f, friction = 0.25f, terminal = 6.f;
+		const float dt = DeltaTime::get();
+		const float momentum = 0.5f*dt, friction = 0.25f*dt, terminal = 6.f;
 		
 		// Input
 		sf::Vector2f input;
