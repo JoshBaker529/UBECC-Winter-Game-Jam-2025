@@ -1,6 +1,7 @@
 // This file holds the structure for the inventory menu
 // As of right now, it does not save what the inventory is
 
+#include "Controls.hpp"
 #include "Item.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Window/Keyboard.hpp"
@@ -48,6 +49,7 @@ private:
   bool open;
   std::array<Item, SLOTS> inventory;
   std::array<bool, SLOTS> slot_filled;
+  std::array<bool, SLOTS> moving;
 
   void changeInventorySlot(int, AddRemove, Item = Item());
   int VertexArrayIndexFromPosition(int);
@@ -125,6 +127,7 @@ inline Inventory::Inventory(sf::Vector2f vec) {
 
   for (int i = 0; i < SLOTS; i++) {
     slot_filled[i] = false;
+    moving[i] = false;
   }
 
   // NOTE:
@@ -135,12 +138,16 @@ inline Inventory::Inventory(sf::Vector2f vec) {
   array = sf::VertexArray(sf::PrimitiveType::Triangles,
                           ((SLOTS * 2) + 1) * VERTICES_PER_SQUARE);
 
-  array[0].position = sf::Vector2f{-350.f, -300.f};
-  array[1].position = sf::Vector2f{350.f, -300.f};
-  array[2].position = sf::Vector2f{350.f, 0.f};
-  array[3].position = sf::Vector2f{-350.f, -300.f};
-  array[4].position = sf::Vector2f{-350.f, 0.f};
-  array[5].position = sf::Vector2f{350.f, 0.f};
+  sf::Vector2f UpLeft(start.x, start.y), UpRight(start.x + WIDTH, start.y),
+      DownLeft(start.x, start.y + HEIGHT),
+      DownRight(start.x + WIDTH, start.y + HEIGHT);
+
+  array[0].position = UpLeft;
+  array[1].position = UpRight;
+  array[2].position = DownRight;
+  array[3].position = DownRight;
+  array[4].position = DownLeft;
+  array[5].position = UpLeft;
 
   array[0].color = sf::Color(BACKGROUND_COLOR);
   array[1].color = sf::Color(BACKGROUND_COLOR);
@@ -261,6 +268,11 @@ inline sf::VertexArray Inventory::getArray() { return array; }
 // Draws the inventory
 inline void Inventory::draw(sf::RenderWindow &window) {
   if (open) {
+    if (Controls::tapped(sf::Mouse::Button::Left)) {
+      sf::Vector2i mousePos = Controls::mousePosition();
+      std::cout << "Mouse position: " << mousePos.x << " " << mousePos.y << "\n"
+                << std::flush;
+    }
     window.draw(array);
   }
 }
