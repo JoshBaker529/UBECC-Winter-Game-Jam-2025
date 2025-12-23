@@ -93,6 +93,11 @@ public:
 		removeTileAtIndex(worldToGridCoords(position));
 	}
 	
+	void clear(){
+		tiles.clear();
+		verts.clear();
+	}
+	
 	bool collision(sf::Vector2f position){
 		const Tile *found = getTile(position);
 		return found->type != Tile::Type::air;
