@@ -59,6 +59,7 @@ public:
   void toggleOpen();
   sf::VertexArray getArray();
   void insertItem(int, Item);
+  void removeItem(int);
 
   void draw(sf::RenderWindow &);
 };
@@ -69,14 +70,12 @@ public:
 
 inline void Inventory::changeInventorySlot(int pos, AddRemove ar, Item item) {
 
-  std::cout << "Changing item at pos " << pos << "\n" << std::flush;
   int starting_index = VertexArrayIndexFromPosition(pos);
 
   // For now, just changing the color
   // Will need to update texture coords later
   switch (ar) {
   case ADD:
-    std::cout << "Adding at pos " << pos << "\n" << std::flush;
     array[starting_index + 0].color = sf::Color(SLOT_COLOR + 0xE0101000);
     array[starting_index + 1].color = sf::Color(SLOT_COLOR + 0xE0101000);
     array[starting_index + 2].color = sf::Color(SLOT_COLOR + 0xE0101000);
@@ -253,4 +252,13 @@ inline void Inventory::insertItem(int pos, Item item) {
   slot_filled[pos] = true;
   inventory[pos] = item;
   changeInventorySlot(pos, ADD, item);
+}
+
+inline void Inventory::removeItem(int pos) {
+  if (pos < 0 || pos > SLOTS) {
+    return;
+  }
+  slot_filled[pos] = false;
+  inventory[pos] = Item();
+  changeInventorySlot(pos, REMOVE);
 }
