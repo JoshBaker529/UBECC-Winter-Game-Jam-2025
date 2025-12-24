@@ -4,15 +4,21 @@
 #include "Controls.hpp"
 #include "Crafting.hpp" // Include Item.hpp and ItemList.hpp
 
+#include "SFML/Graphics/Color.hpp"
+#include "SFML/Graphics/Font.hpp"
+#include "SFML/Graphics/PrimitiveType.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <array>
 #include <iostream>
+#include <string>
 
 // TODO:
 // Add hover text
 // Add quanty text
+//    Change addItem to just increase the quantity of an item that already
+//    exists
 
 ////////////////////////////////////////////////////////////////////////////////
 // Defines, because magic numbers are bad :D
@@ -34,18 +40,28 @@
 #define BACKGROUND_COLOR 0xF0F0F0FF
 #define SLOT_COLOR 0xBBBBBBFF
 #define TRANSPARENT 0x00000000
+#define TEXT_FILL 0xFFFFFFFF
+#define TEXT_OUTLINE_COLOR 0x000000FF
+
+#define TEXT_OUTLINE_SIZE 0.5f
 
 // Textures!
 #define TEXTURE_WIDTH 100.f
 #define TEXTURE_HEIGHT 100.f
 
+// Text offsets
+#define ONE_DIGIT -10
+#define TWO_DIGITS 8
+
 // The index of the floating item
+// WARN: Not actually a valid array index!!
 #define FLOATING_INDEX (VertexArrayIndexFromSlot(SLOTS - 1) + 6)
 
 // Variables to hold where the starting positions are for moving an item
 static sf::Vector2i mouse_start;
 static sf::Vector2f slot_start_positions[VERTICES_PER_SQUARE];
 
+static sf::Font font("res/tuffy.ttf");
 ////////////////////////////////////////////////////////////////////////////////
 // Class Definition
 ////////////////////////////////////////////////////////////////////////////////
@@ -58,6 +74,7 @@ private:
   std::array<Item, SLOTS> inventory;
   std::array<bool, SLOTS> slot_filled;
   bool moving;
+  sf::VertexArray floating_icon;
   Item floating_item;
   ItemQuantities item_quantities;
   Crafting crafting;
@@ -166,21 +183,57 @@ int Inventory::getVertexFromPosition(sf::Vector2i pos) {
 }
 
 void Inventory::updateTextures(int index) {
-  int vector_index;
+  int vector_index = VertexArrayIndexFromSlot(index);
   bool tex;
-  Item item;
-  if (index == FLOATING_INDEX) {
-    vector_index = FLOATING_INDEX;
-    tex = moving;
-    item = floating_item;
-  } else {
-    vector_index = VertexArrayIndexFromSlot(index);
+
+  vector_index = VertexArrayIndexFromSlot(index);
+
+  if (index == FLOATING_INDEX)
+    tex = true;
+  else
     tex = slot_filled[index];
-    item = inventory[index];
-  }
 
   if (tex) {
 
+    // I cannot be bothered to refactor this properly since switching
+    // the floating item to a separate VertexArray...
+    if (index == FLOATING_INDEX) {
+      sf::Vector2f texStart = floating_item.getTexturePosition();
+
+      sf::Vector2f UpLeft = texStart,
+                   UpRight(texStart.x + TEXTURE_WIDTH, texStart.y),
+                   DownLeft(texStart.x, texStart.y + TEXTURE_HEIGHT),
+                   DownRight(texStart.x + TEXTURE_WIDTH,
+                             texStart.y + TEXTURE_HEIGHT);
+
+      /*
+      floating_icon[vector_index + 0].texCoords = UpLeft;
+      floating_icon[vector_index + 1].texCoords = UpRight;
+      floating_icon[vector_index + 2].texCoords = DownRight;
+      floating_icon[vector_index + 3].texCoords = DownRight;
+      floating_icon[vector_index + 4].texCoords = DownLeft;
+      floating_icon[vector_index + 5].texCoords = UpLeft;
+      */
+      /*
+      floating_icon[vector_index + 0].color = sf::Color(SLOT_COLOR +
+      0xE0101000); floating_icon[vector_index + 1].color = sf::Color(SLOT_COLOR
+      + 0xE0101000); floating_icon[vector_index + 2].color =
+      sf::Color(SLOT_COLOR + 0xE0101000); floating_icon[vector_index + 3].color
+      = sf::Color(SLOT_COLOR + 0xE0101000); floating_icon[vector_index +
+      4].color = sf::Color(SLOT_COLOR + 0xE0101000); floating_icon[vector_index
+      + 5].color = sf::Color(SLOT_COLOR + 0xE0101000);
+      */
+
+      floating_icon[0].color = sf::Color(floating_item.temp_color);
+      floating_icon[1].color = sf::Color(floating_item.temp_color);
+      floating_icon[2].color = sf::Color(floating_item.temp_color);
+      floating_icon[3].color = sf::Color(floating_item.temp_color);
+      floating_icon[4].color = sf::Color(floating_item.temp_color);
+      floating_icon[5].color = sf::Color(floating_item.temp_color);
+
+      return;
+    }
+    Item item = inventory[index];
     sf::Vector2f texStart = item.getTexturePosition();
 
     sf::Vector2f UpLeft = texStart,
@@ -213,6 +266,16 @@ void Inventory::updateTextures(int index) {
     array[vector_index + 4].color = sf::Color(item.temp_color);
     array[vector_index + 5].color = sf::Color(item.temp_color);
   } else {
+    if (index == FLOATING_INDEX) {
+
+      floating_icon[vector_index + 0].color = sf::Color(TRANSPARENT);
+      floating_icon[vector_index + 1].color = sf::Color(TRANSPARENT);
+      floating_icon[vector_index + 2].color = sf::Color(TRANSPARENT);
+      floating_icon[vector_index + 3].color = sf::Color(TRANSPARENT);
+      floating_icon[vector_index + 4].color = sf::Color(TRANSPARENT);
+      floating_icon[vector_index + 5].color = sf::Color(TRANSPARENT);
+      return;
+    }
     array[vector_index + 0].color = sf::Color(TRANSPARENT);
     array[vector_index + 1].color = sf::Color(TRANSPARENT);
     array[vector_index + 2].color = sf::Color(TRANSPARENT);
@@ -247,9 +310,10 @@ Inventory::Inventory(sf::Vector2f vec) {
   // SLOTS  -- number of inventory slots
   // * 2    -- One for the base layer, one for the items layer
   // + 1    -- Background rectangle
-  // + 1    -- Floating inventory slot
   array = sf::VertexArray(sf::PrimitiveType::Triangles,
-                          ((SLOTS * 2) + 2) * VERTICES_PER_SQUARE);
+                          ((SLOTS * 2) + 1) * VERTICES_PER_SQUARE);
+  floating_icon =
+      sf::VertexArray(sf::PrimitiveType::Triangles, VERTICES_PER_SQUARE);
 
   sf::Vector2f UpLeft(start.x, start.y), UpRight(start.x + WIDTH, start.y),
       DownLeft(start.x, start.y + HEIGHT),
@@ -393,12 +457,6 @@ void Inventory::draw(sf::RenderWindow &window) {
             removeItem(index);
             updateTextures(index);
             updateTextures(FLOATING_INDEX);
-            /*
-            int vertex_index = VertexArrayIndexFromSlot(index);
-            for (int i = 0; i < VERTICES_PER_SQUARE; i++) {
-              // slot_start_positions[i] = array[vertex_index + i].position;
-            }
-            */
           }
         }
       } else { // Currently moving an item
@@ -422,6 +480,36 @@ void Inventory::draw(sf::RenderWindow &window) {
       }
     }
 
+    window.draw(array);
+
+    // BUG: For some reason, I get an error when closing since adding this...
+    // Just the text sections
+    for (int slot = 0; slot < SLOTS; slot++) {
+      if (inventory[slot].getQuantity() <= 1)
+        continue;
+      sf::Vector2f position =
+          array[VertexArrayIndexFromSlot(slot) + 2].position;
+
+      sf::Text text(font, std::to_string(inventory[slot].getQuantity()));
+      unsigned int size = text.getCharacterSize() + 2;
+      position.y -= size;
+      // Compensate for either 1 or 2 digits
+      if (inventory[slot].getQuantity() / 10 > 0) {
+        size += TWO_DIGITS;
+      } else {
+        size += ONE_DIGIT;
+      }
+      position.x -= size;
+
+      text.setPosition(position);
+      text.setFillColor(sf::Color(TEXT_FILL));
+      text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
+      text.setOutlineThickness(TEXT_OUTLINE_SIZE);
+      text.setStyle(sf::Text::Style::Bold);
+
+      window.draw(text);
+    }
+
     if (moving) {
       float x_offset = (WIDTH / COLUMNS / 2);
       float y_offset = (HEIGHT / ROWS / 2);
@@ -431,15 +519,37 @@ void Inventory::draw(sf::RenderWindow &window) {
           DownLeft(mousePos.x - x_offset, mousePos.y + y_offset),
           DownRight(mousePos.x + x_offset, mousePos.y + y_offset);
 
-      array[FLOATING_INDEX + 0].position = UpLeft;
-      array[FLOATING_INDEX + 1].position = UpRight;
-      array[FLOATING_INDEX + 2].position = DownRight;
-      array[FLOATING_INDEX + 3].position = DownRight;
-      array[FLOATING_INDEX + 4].position = DownLeft;
-      array[FLOATING_INDEX + 5].position = UpLeft;
-    }
+      floating_icon[0].position = UpLeft;
+      floating_icon[1].position = UpRight;
+      floating_icon[2].position = DownRight;
+      floating_icon[3].position = DownRight;
+      floating_icon[4].position = DownLeft;
+      floating_icon[5].position = UpLeft;
+      window.draw(floating_icon);
 
-    window.draw(array);
+      if (floating_item.getQuantity() >= 1) {
+        sf::Vector2f position = floating_icon[2].position;
+
+        sf::Text text(font, std::to_string(floating_item.getQuantity()));
+        unsigned int size = text.getCharacterSize() + 2;
+        position.y -= size;
+        // Compensate for either 1 or 2 digits
+        if (floating_item.getQuantity() / 10 > 0) {
+          size += TWO_DIGITS;
+        } else {
+          size += ONE_DIGIT;
+        }
+        position.x -= size;
+
+        text.setPosition(position);
+        text.setFillColor(sf::Color(TEXT_FILL));
+        text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
+        text.setOutlineThickness(TEXT_OUTLINE_SIZE);
+        text.setStyle(sf::Text::Style::Bold);
+
+        window.draw(text);
+      }
+    }
   }
 }
 
