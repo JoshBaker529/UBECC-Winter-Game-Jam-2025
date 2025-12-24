@@ -69,7 +69,7 @@ private:
   tooltipFunction tooltipHover;
 
 public:
-  Item(std::string, sf::Vector2f, int, TypeFlags, actionFunction = NULL,
+  Item(std::string, sf::Vector2f, int, int, TypeFlags, actionFunction = NULL,
        tooltipFunction = NULL);
   void setConsumableStats(float, float, float);
   void setEquipableStats(float, float);
@@ -77,6 +77,7 @@ public:
   std::string getTooltip();
   sf::Vector2f getTexturePosition();
   std::string getName();
+  int getQuantity();
   void debugPrint();
 
   Item();
@@ -89,11 +90,13 @@ public:
   uint32_t temp_color;
 };
 
-inline Item::Item(std::string name, sf::Vector2f texture, int max_stack,
-                  TypeFlags type, actionFunction action, tooltipFunction hover)
-    : name(name), texture_position(texture), stack_size(0), max_stack_size(0),
-      type(type), hp_gained(0), hunger_gained(0), warmth_gained(0), defense(0),
-      cold_resist(0), useAction(action), tooltipHover(hover) {
+inline Item::Item(std::string name, sf::Vector2f texture, int quantity,
+                  int max_stack, TypeFlags type, actionFunction action,
+                  tooltipFunction hover)
+    : name(name), texture_position(texture), stack_size(quantity),
+      max_stack_size(max_stack), type(type), hp_gained(0), hunger_gained(0),
+      warmth_gained(0), defense(0), cold_resist(0), useAction(action),
+      tooltipHover(hover) {
   // INFO:
   // Constructor intentionally left blank, everything is in initialization
   // list.
@@ -145,21 +148,23 @@ inline std::string Item::getTooltip() {
   return ss.str();
 }
 
-inline sf::Vector2f Item::getTexturePosition() { return texture_position; }
+sf::Vector2f Item::getTexturePosition() { return texture_position; }
 
-inline std::string Item::getName() { return name; }
+std::string Item::getName() { return name; }
 
-inline void Item::debugPrint() {
+int Item::getQuantity() { return stack_size; }
+
+void Item::debugPrint() {
   printf("Name: %s, Texture: %f %f, Color: %x\n", name.c_str(),
          texture_position.x, texture_position.y, temp_color);
 }
 
-inline Item::Item()
+Item::Item()
     : name(""), texture_position(sf::Vector2f{0, 0}), stack_size(0),
       max_stack_size(0), type(0), hp_gained(0), hunger_gained(0),
       warmth_gained(0), defense(0), cold_resist(0), useAction(0),
       tooltipHover(0) {}
 
-inline Item::~Item() {
+Item::~Item() {
   // intentionally left blank, nothing to destroy
 }
