@@ -19,9 +19,9 @@
 #include <string>
 
 // TODO:
-// Add hover text
-//    Change addItem to just increase the quantity of an item that already
-//    exists
+// Add automatic updating of the crafting list and displaying
+// Fully implement the ability to craft items from inventory
+// Add CraftingFlags togglables
 
 ////////////////////////////////////////////////////////////////////////////////
 // Defines, because magic numbers are bad :D
@@ -47,6 +47,7 @@
 #define TEXT_OUTLINE_COLOR 0x000000FF
 #define TOOLTOP_BACKGROUND_COLOR 0x202080FF
 
+// Text
 #define TEXT_OUTLINE_SIZE 0.5f
 
 // Textures!
@@ -56,6 +57,8 @@
 // Text offsets
 #define ONE_DIGIT -10
 #define TWO_DIGITS 8
+
+// Tooltip stuff
 #define TEXTBOX_BORDER 10
 #define TEXTBOX_OFFSET TEXTBOX_BORDER / 2
 #define TOOLTIP_OFFSET_LEFT 10
@@ -67,7 +70,9 @@
 
 // Variables to hold where the starting positions are for moving an item
 
+// The font used
 static sf::Font font("res/tuffy.ttf");
+
 ////////////////////////////////////////////////////////////////////////////////
 // Class Definition
 ////////////////////////////////////////////////////////////////////////////////
@@ -188,6 +193,8 @@ int Inventory::getVertexFromPosition(sf::Vector2i pos) {
   return ret;
 }
 
+// Updates the texCoords for a given index
+// Uses floating_item for the reference if index is FLOATING_INDEX
 void Inventory::updateTextures(int index) {
   int vector_index = VertexArrayIndexFromSlot(index);
   bool tex;
@@ -303,7 +310,9 @@ void Inventory::initItemQuantities() {
 // Public Methods
 ////////////////////////////////////////////////////////////////////////////////
 
+// Constructor
 Inventory::Inventory(sf::Vector2f vec) {
+  // Don't ask why I have this as a param, and not a define like everything else
   start = vec;
 
   for (int i = 0; i < SLOTS; i++) {
@@ -436,6 +445,7 @@ Inventory::Inventory(sf::Vector2f vec) {
   }
 }
 
+// Destructor
 Inventory::~Inventory() {
   // idk, I'm not using pointers ..
 }
@@ -640,6 +650,8 @@ void Inventory::removeItem(int pos) {
 }
 
 // Generic add item to inventory
+// Will first see if there is already equivalent items with space,
+// Adds to them first. Otherwise,
 // Equivalent to InsertItem(int, Item)
 // Where int is the first open slot;
 void Inventory::addItem(Item item) {
@@ -673,6 +685,7 @@ void Inventory::setCraftingFlags(CraftingFlags flags) {
   crafting_flags = flags;
 }
 
+// Debug printing to console the craftable items given current item quantities
 void Inventory::printCrafting() {
   auto vec = crafting.getCraftable(item_quantities, crafting_flags);
   std::cout << "Craftable: \n";
@@ -681,6 +694,7 @@ void Inventory::printCrafting() {
   }
 }
 
+// Debug printing to console the contents item_quantities
 void Inventory::printInventory() {
   std::cout << "Inventory: \n";
   for (auto it = item_quantities.begin(); it != item_quantities.end(); it++) {
