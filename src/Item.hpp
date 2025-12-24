@@ -7,6 +7,7 @@
 #include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/System/Vector2.hpp"
+#include <cstdio>
 #include <sstream>
 // Typedefs for the possible item types
 typedef uint8_t TypeFlags;
@@ -75,6 +76,8 @@ public:
   void draw(sf::RenderWindow &);
   std::string getTooltip();
   sf::Vector2f getTexturePosition();
+  std::string getName();
+  void debugPrint();
 
   Item();
   Item(Item &&) = default;
@@ -82,6 +85,8 @@ public:
   Item &operator=(Item &&) = default;
   Item &operator=(const Item &) = default;
   ~Item();
+
+  uint32_t temp_color;
 };
 
 inline Item::Item(std::string name, sf::Vector2f texture, int max_stack,
@@ -89,12 +94,13 @@ inline Item::Item(std::string name, sf::Vector2f texture, int max_stack,
     : name(name), texture_position(texture), stack_size(0), max_stack_size(0),
       type(type), hp_gained(0), hunger_gained(0), warmth_gained(0), defense(0),
       cold_resist(0), useAction(action), tooltipHover(hover) {
-        // INFO:
-        // Constructor intentionally left blank, everything is in initialization
-        // list.
-        // See setConsumableStats and setEquipableStats for the stats that are
-        // not listed here
-      };
+  // INFO:
+  // Constructor intentionally left blank, everything is in initialization
+  // list.
+  // See setConsumableStats and setEquipableStats for the stats that are
+  // not listed here
+  temp_color = 0xEBBBBBFF;
+};
 
 inline void Item::setConsumableStats(float hp, float hunger, float warmth) {
   hp_gained = hp;
@@ -140,6 +146,13 @@ inline std::string Item::getTooltip() {
 }
 
 inline sf::Vector2f Item::getTexturePosition() { return texture_position; }
+
+inline std::string Item::getName() { return name; }
+
+inline void Item::debugPrint() {
+  printf("Name: %s, Texture: %f %f, Color: %x\n", name.c_str(),
+         texture_position.x, texture_position.y, temp_color);
+}
 
 inline Item::Item()
     : name(""), texture_position(sf::Vector2f{0, 0}), stack_size(0),
