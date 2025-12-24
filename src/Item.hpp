@@ -26,24 +26,6 @@ typedef uint8_t TypeFlags;
 typedef void (*actionFunction)();         // Void return, no params
 typedef std::string (*tooltipFunction)(); // String return, no params
 
-// NOTE:
-// OKOK So Ian is planning to use a single file for the textures
-// So I can switch out the RectangleShape for a VertexArray
-// Each four points will need to be associated with the coords of
-// a texture on that grid.
-// Then I'll need to implement a movement for a single item out of the whole
-// VertexArray.
-
-// TODO:
-// - Implement a typedef that translates name -> texture.
-//    - change the texture type
-// - Maybe modify the inventory to be not a menu class but the actual inventory
-//      This would help sort out the VectorArray and combine them all into one
-//      item
-//    - Implement movement for a single item out of a massive VertexArray
-//    - Add Array of Item objects or linked list ?? Some container
-//    - Add Draw function to InventoryMenu
-
 class Item {
 private:
   // Default stuff an item has
@@ -102,9 +84,10 @@ public:
   uint32_t temp_color;
 };
 
-inline Item::Item(std::string name, sf::Vector2f texture, int quantity,
-                  int max_stack, TypeFlags type, actionFunction action,
-                  tooltipFunction hover)
+// Simple constructor
+// You should use the full constructor!
+Item::Item(std::string name, sf::Vector2f texture, int quantity, int max_stack,
+           TypeFlags type, actionFunction action, tooltipFunction hover)
     : name(name), texture_position(texture), stack_size(quantity),
       max_stack_size(max_stack), type(type), hp_gained(0), hunger_gained(0),
       warmth_gained(0), defense(0), cold_resist(0), useAction(action),
@@ -112,10 +95,11 @@ inline Item::Item(std::string name, sf::Vector2f texture, int quantity,
   temp_color = 0xEBBBBBFF;
 };
 
-inline Item::Item(std::string name, sf::Vector2f texture, int quantity,
-                  int max_stack, TypeFlags type, float hp, float hunger,
-                  float warmth, float def, float cold, actionFunction action,
-                  tooltipFunction hover)
+// Full constructor
+// Has a param for every member field
+Item::Item(std::string name, sf::Vector2f texture, int quantity, int max_stack,
+           TypeFlags type, float hp, float hunger, float warmth, float def,
+           float cold, actionFunction action, tooltipFunction hover)
     : name(name), texture_position(texture), stack_size(quantity),
       max_stack_size(max_stack), type(type), hp_gained(hp),
       hunger_gained(hunger), warmth_gained(warmth), defense(def),
@@ -123,32 +107,37 @@ inline Item::Item(std::string name, sf::Vector2f texture, int quantity,
   temp_color = 0xEBBBBBFF;
 };
 
-inline void Item::setConsumableStats(float hp, float hunger, float warmth) {
+// Sets the consumable stats (hp, hunger, and warmth gained)
+void Item::setConsumableStats(float hp, float hunger, float warmth) {
   hp_gained = hp;
   hunger_gained = hunger;
   warmth_gained = warmth;
 }
 
-inline void Item::setEquipableStats(float armor, float cold) {
+// Sets the equipable stats (defense, cold resistance)
+void Item::setEquipableStats(float armor, float cold) {
   defense = armor;
   cold_resist = cold;
 }
 
-inline void Item::draw(sf::RenderWindow &window) {
+// Iiiii don't use this anymore, but it's nice to have for debugging
+void Item::draw(sf::RenderWindow &window) {
   sf::RectangleShape rect(sf::Vector2f{50, 50});
   rect.setPosition(sf::Vector2f{70, 70});
 
   window.draw(rect);
 }
-
-inline std::string Item::getTooltip() {
+// Returns the string for the tooltip
+// Will use the tooltipHover function if provided,
+// Otherwise just provides the stats
+std::string Item::getTooltip() {
   std::stringstream ss;
   if (tooltipHover) {
     ss << tooltipHover();
     return ss.str();
   }
 
-  ss << name << '\n' << stack_size << " / " << max_stack_size;
+  ss << name << '\n' << stack_size << "/" << max_stack_size;
 
   if (type & CONSUMABLE)
     ss << "\nHP: " << hp_gained << "\nFood: " << hunger_gained
@@ -166,41 +155,59 @@ inline std::string Item::getTooltip() {
   return ss.str();
 }
 
+// Returns the texture position
 sf::Vector2f Item::getTexturePosition() { return texture_position; }
 
+// Returns the name
 std::string Item::getName() { return name; }
 
+// Returns the current stack size
 int Item::getQuantity() { return stack_size; }
 
+// Returns the maximum stack size
 int Item::getMaxStack() { return max_stack_size; }
 
+// Gets the type of the item, as a bitstring
 TypeFlags Item::getType() { return type; }
 
+// Returns the ammount of HP gained
 float Item::getHpGained() { return hp_gained; }
 
+// Returns the ammount of hunger gained
 float Item::getHungerGained() { return hunger_gained; }
 
+// Returns the ammount of warmth gained
 float Item::getWarmthGained() { return warmth_gained; }
 
+// Returns the amount of defense item gives
 float Item::getDefenseGained() { return defense; }
 
+// Returns the amount of cold resist item gives
 float Item::getColdResist() { return cold_resist; }
 
+// Sets the quantity
+// No checks, it is unsafe if stack size is important
 void Item::setQuantity(int qty) { stack_size = qty; }
 
+// Adds to the quantity
+// No checks, it is unsafe if the stack size is important
 void Item::addQuantity(int qty) { stack_size += qty; }
 
+// Simple debug print to console
 void Item::debugPrint() {
   printf("Name: %s, Texture: %f %f, Color: %x\n", name.c_str(),
          texture_position.x, texture_position.y, temp_color);
 }
 
+// Default constructor
+// DO NOT USE UNLESS YOU KNOW WHAT YOU'RE DOING!
 Item::Item()
     : name(""), texture_position(sf::Vector2f{0, 0}), stack_size(0),
       max_stack_size(0), type(0), hp_gained(0), hunger_gained(0),
       warmth_gained(0), defense(0), cold_resist(0), useAction(0),
       tooltipHover(0) {}
 
+// Destructor, kinda useless
 Item::~Item() {
   // intentionally left blank, nothing to destroy
 }
