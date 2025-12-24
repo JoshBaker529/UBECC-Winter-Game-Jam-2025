@@ -7,6 +7,8 @@
 #include "SFML/Graphics/Color.hpp"
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/Graphics/PrimitiveType.hpp"
+#include "SFML/Graphics/Rect.hpp"
+#include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Window/Mouse.hpp"
@@ -43,6 +45,7 @@
 #define TRANSPARENT 0x00000000
 #define TEXT_FILL 0xFFFFFFFF
 #define TEXT_OUTLINE_COLOR 0x000000FF
+#define TOOLTOP_BACKGROUND_COLOR 0x202080FF
 
 #define TEXT_OUTLINE_SIZE 0.5f
 
@@ -53,6 +56,10 @@
 // Text offsets
 #define ONE_DIGIT -10
 #define TWO_DIGITS 8
+#define TEXTBOX_BORDER 10
+#define TEXTBOX_OFFSET TEXTBOX_BORDER / 2
+#define TOOLTIP_OFFSET_LEFT 10
+#define TOOLTIP_OFFSET_UP 30
 
 // The index of the floating item
 // WARN: Not actually a valid array index!!
@@ -556,7 +563,7 @@ void Inventory::draw(sf::RenderWindow &window) {
       floating_icon[5].position = UpLeft;
       window.draw(floating_icon);
 
-      if (floating_item.getQuantity() >= 1) {
+      if (floating_item.getQuantity() > 1) {
         sf::Vector2f position = floating_icon[2].position;
 
         sf::Text text(font, std::to_string(floating_item.getQuantity()));
@@ -576,6 +583,33 @@ void Inventory::draw(sf::RenderWindow &window) {
         text.setOutlineThickness(TEXT_OUTLINE_SIZE);
         text.setStyle(sf::Text::Style::Bold);
 
+        window.draw(text);
+      }
+    } else {
+      // Only draw text if not holding item
+      int index = getVertexFromPosition(mousePos);
+      if (index >= 0 && slot_filled[index]) {
+        sf::Text text(font, inventory[index].getTooltip());
+        text.setPosition(sf::Vector2f{static_cast<float>(mousePos.x),
+                                      static_cast<float>(mousePos.y)});
+        text.setFillColor(sf::Color(TEXT_FILL));
+        text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
+        text.setOutlineThickness(TEXT_OUTLINE_SIZE);
+        text.setScale(sf::Vector2f{0.9, 0.9});
+        text.setLineSpacing(0.9f);
+
+        sf::FloatRect fr = text.getGlobalBounds();
+        text.move(sf::Vector2f{-(fr.size.x + TOOLTIP_OFFSET_LEFT),
+                               -TOOLTIP_OFFSET_UP});
+        fr = text.getGlobalBounds();
+
+        sf::RectangleShape rect(fr.size +
+                                sf::Vector2f{TEXTBOX_BORDER, TEXTBOX_BORDER});
+        rect.setPosition(fr.position -
+                         sf::Vector2f{TEXTBOX_OFFSET, TEXTBOX_OFFSET});
+        rect.setFillColor(sf::Color(TOOLTOP_BACKGROUND_COLOR));
+
+        window.draw(rect);
         window.draw(text);
       }
     }
