@@ -2,11 +2,17 @@
 // As of right now, it does not save what the inventory is
 
 #include "Controls.hpp"
-#include "Item.hpp"
+#include "Crafting.hpp" // Include Item.hpp and ItemList.hpp
+
 #include "SFML/Graphics/RenderWindow.hpp"
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <array>
+#include <iostream>
+
+// TODO:
+// Add hover text
+// Add quanty text
 
 ////////////////////////////////////////////////////////////////////////////////
 // Defines, because magic numbers are bad :D
@@ -53,12 +59,16 @@ private:
   std::array<bool, SLOTS> slot_filled;
   bool moving;
   Item floating_item;
+  ItemQuantities item_quantities;
+  Crafting crafting;
+  CraftingFlags crafting_flags;
 
   int VertexArrayIndexFromSlot(int);
   int BackgroundVertexArrayIndexFromSlot(int);
   int getFirstFreeSlot();
   int getVertexFromPosition(sf::Vector2i);
   void updateTextures(int);
+  void initItemQuantities();
 
 public:
   Inventory(sf::Vector2f);
@@ -69,6 +79,10 @@ public:
   void insertItem(int, Item);
   void removeItem(int);
   void addItem(Item);
+  void setCraftingFlags(CraftingFlags);
+
+  void printCrafting();
+  void printInventory();
 
   void draw(sf::RenderWindow &);
 };
@@ -208,6 +222,13 @@ void Inventory::updateTextures(int index) {
   }
 }
 
+// Populates item_quantities with default values
+void Inventory::initItemQuantities() {
+  for (auto it = ItemList.begin(); it != ItemList.end(); it++) {
+    item_quantities[it->first] = 0;
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Public Methods
 ////////////////////////////////////////////////////////////////////////////////
@@ -219,6 +240,7 @@ Inventory::Inventory(sf::Vector2f vec) {
     slot_filled[i] = false;
   }
   moving = false;
+  crafting_flags = NO_FLAG;
 
   // NOTE:
   // Explanation of vertexCount:
@@ -426,6 +448,7 @@ void Inventory::insertItem(int pos, Item item) {
   if (pos < 0 || pos > SLOTS) {
     return;
   }
+  item_quantities[item.getName()] += item.getQuantity();
   slot_filled[pos] = true;
   inventory[pos] = item;
   updateTextures(pos);
@@ -436,6 +459,8 @@ void Inventory::removeItem(int pos) {
   if (pos < 0 || pos > SLOTS) {
     return;
   }
+  Item item = inventory[pos];
+  item_quantities[item.getName()] -= item.getQuantity();
   slot_filled[pos] = false;
   inventory[pos] = Item();
   updateTextures(pos);
@@ -450,4 +475,24 @@ void Inventory::addItem(Item item) {
     return;
   }
   insertItem(pos, item);
+}
+
+// Sets the current crafting flags - shows what objects we're close to
+void Inventory::setCraftingFlags(CraftingFlags flags) {
+  crafting_flags = flags;
+}
+
+void Inventory::printCrafting() {
+  auto vec = crafting.getCraftable(item_quantities, crafting_flags);
+  std::cout << "Craftable: \n";
+  for (auto it = vec.begin(); it != vec.end(); it++) {
+    std::cout << "Can craft " << it->getName() << std::endl;
+  }
+}
+
+void Inventory::printInventory() {
+  std::cout << "Inventory: \n";
+  for (auto it = item_quantities.begin(); it != item_quantities.end(); it++) {
+    std::cout << it->first << " x" << it->second << std::endl;
+  }
 }
