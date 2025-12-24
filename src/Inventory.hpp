@@ -16,7 +16,6 @@
 
 // TODO:
 // Add hover text
-// Add quanty text
 //    Change addItem to just increase the quantity of an item that already
 //    exists
 
@@ -188,13 +187,15 @@ void Inventory::updateTextures(int index) {
 
   vector_index = VertexArrayIndexFromSlot(index);
 
-  if (index == FLOATING_INDEX)
-    tex = true;
-  else
+  if (index == FLOATING_INDEX) {
+    if (floating_item.getName() == "")
+      tex = false;
+    else
+      tex = true;
+  } else
     tex = slot_filled[index];
 
   if (tex) {
-
     // I cannot be bothered to refactor this properly since switching
     // the floating item to a separate VertexArray...
     if (index == FLOATING_INDEX) {
@@ -267,7 +268,6 @@ void Inventory::updateTextures(int index) {
     array[vector_index + 5].color = sf::Color(item.temp_color);
   } else {
     if (index == FLOATING_INDEX) {
-
       floating_icon[vector_index + 0].color = sf::Color(TRANSPARENT);
       floating_icon[vector_index + 1].color = sf::Color(TRANSPARENT);
       floating_icon[vector_index + 2].color = sf::Color(TRANSPARENT);
@@ -460,20 +460,37 @@ void Inventory::draw(sf::RenderWindow &window) {
           }
         }
       } else { // Currently moving an item
-        // swap items
-        // replace held item
 
-        bool temp_filled = slot_filled[index];
-        Item temp_item = inventory[index];
-        moving = slot_filled[index];
+        if (inventory[index].getName() == floating_item.getName()) {
+          // items are the same, add to stack
+          int empty =
+              inventory[index].getMaxStack() - inventory[index].getQuantity();
+          if (empty > 0) {
+            if (empty > floating_item.getQuantity()) {
+              inventory[index].addQuantity(floating_item.getQuantity());
+              floating_item = Item();
+              moving = false;
+            } else {
+              inventory[index].addQuantity(empty);
+              floating_item.addQuantity(-empty); // lol I guess this works
+            }
+          }
 
-        slot_filled[index] = true;
-        inventory[index] = floating_item;
-
-        if (temp_filled) {
-          floating_item = temp_item;
         } else {
-          floating_item = Item();
+          // Swap items
+
+          bool temp_filled = slot_filled[index];
+          Item temp_item = inventory[index];
+          moving = slot_filled[index];
+
+          slot_filled[index] = true;
+          inventory[index] = floating_item;
+
+          if (temp_filled) {
+            floating_item = temp_item;
+          } else {
+            floating_item = Item();
+          }
         }
         updateTextures(FLOATING_INDEX);
         updateTextures(index);
@@ -580,11 +597,29 @@ void Inventory::removeItem(int pos) {
 // Equivalent to InsertItem(int, Item)
 // Where int is the first open slot;
 void Inventory::addItem(Item item) {
-  int pos = getFirstFreeSlot();
-  if (pos < 0) {
-    return;
+
+  for (auto i = inventory.begin(); i != inventory.end(); i++) {
+    if (i->getName() == item.getName()) {
+      int empty = i->getMaxStack() - i->getQuantity();
+      if (empty > 0) {
+        if (empty >= item.getQuantity()) {
+          i->addQuantity(item.getQuantity());
+          item.setQuantity(0);
+          return;
+        }
+        i->addQuantity(empty);
+        item.addQuantity(-empty);
+      }
+    }
   }
-  insertItem(pos, item);
+
+  if (item.getQuantity() > 0) {
+    int pos = getFirstFreeSlot();
+    if (pos < 0) {
+      return;
+    }
+    insertItem(pos, item);
+  }
 }
 
 // Sets the current crafting flags - shows what objects we're close to

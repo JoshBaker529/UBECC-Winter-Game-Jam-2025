@@ -88,6 +88,7 @@ public:
   float getDefenseGained();
   float getColdResist();
   void setQuantity(int);
+  void addQuantity(int);
 
   void debugPrint();
 
@@ -186,6 +187,8 @@ float Item::getDefenseGained() { return defense; }
 float Item::getColdResist() { return cold_resist; }
 
 void Item::setQuantity(int qty) { stack_size = qty; }
+
+void Item::addQuantity(int qty) { stack_size += qty; }
 
 void Item::debugPrint() {
   printf("Name: %s, Texture: %f %f, Color: %x\n", name.c_str(),
