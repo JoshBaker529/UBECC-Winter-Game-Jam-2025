@@ -8,6 +8,8 @@
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/Graphics/PrimitiveType.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
+#include "SFML/Window/Keyboard.hpp"
+#include "SFML/Window/Mouse.hpp"
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <array>
@@ -57,8 +59,6 @@
 #define FLOATING_INDEX (VertexArrayIndexFromSlot(SLOTS - 1) + 6)
 
 // Variables to hold where the starting positions are for moving an item
-static sf::Vector2i mouse_start;
-static sf::Vector2f slot_start_positions[VERTICES_PER_SQUARE];
 
 static sf::Font font("res/tuffy.ttf");
 ////////////////////////////////////////////////////////////////////////////////
@@ -446,12 +446,24 @@ sf::VertexArray Inventory::getArray() { return array; }
 void Inventory::draw(sf::RenderWindow &window) {
   sf::Vector2i mousePos = Controls::mousePosition();
   if (open) {
-    if (Controls::tapped(sf::Mouse::Button::Left)) {
+    // BUG: For some reason this isn't working
+    if (Controls::tapped(sf::Mouse::Button::Right)) {
+      std::cout << "kjn" << std::endl;
+      if (!moving) {
+        int index = getVertexFromPosition(mousePos);
+        if (slot_filled[index]) {
+          moving = true;
+          floating_item = inventory[index];
+          floating_item.setQuantity(floating_item.getQuantity() / 2);
+          inventory[index].addQuantity(-floating_item.getQuantity());
+          updateTextures(FLOATING_INDEX);
+        }
+      }
+    } else if (Controls::tapped(sf::Mouse::Button::Left)) {
       int index = getVertexFromPosition(mousePos);
       if (!moving) { // Not currently moving
         if (slot_filled[index]) {
           moving = true;
-          mouse_start = mousePos;
           if (index != -1) {
             floating_item = inventory[index];
             removeItem(index);
