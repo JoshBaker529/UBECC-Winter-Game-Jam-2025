@@ -4,11 +4,9 @@
 #include "Controls.hpp"
 #include "Item.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
-#include "SFML/Window/Keyboard.hpp"
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <array>
-#include <iostream>
 
 ////////////////////////////////////////////////////////////////////////////////
 // Defines, because magic numbers are bad :D
@@ -35,8 +33,12 @@
 #define TEXTURE_WIDTH 100.f
 #define TEXTURE_HEIGHT 100.f
 
-// Insert/Remove
-enum AddRemove { ADD, REMOVE };
+// The index of the floating item
+#define FLOATING_INDEX (VertexArrayIndexFromSlot(SLOTS - 1) + 6)
+
+// Variables to hold where the starting positions are for moving an item
+static sf::Vector2i mouse_start;
+static sf::Vector2f slot_start_positions[VERTICES_PER_SQUARE];
 
 ////////////////////////////////////////////////////////////////////////////////
 // Class Definition
@@ -49,11 +51,14 @@ private:
   bool open;
   std::array<Item, SLOTS> inventory;
   std::array<bool, SLOTS> slot_filled;
-  std::array<bool, SLOTS> moving;
+  bool moving;
+  Item floating_item;
 
-  void changeInventorySlot(int, AddRemove, Item = Item());
-  int VertexArrayIndexFromPosition(int);
+  int VertexArrayIndexFromSlot(int);
+  int BackgroundVertexArrayIndexFromSlot(int);
   int getFirstFreeSlot();
+  int getVertexFromPosition(sf::Vector2i);
+  void updateTextures(int);
 
 public:
   Inventory(sf::Vector2f);
@@ -72,38 +77,18 @@ public:
 // Private Methods
 ////////////////////////////////////////////////////////////////////////////////
 
-// helper function to change a given inventory slot
-inline void Inventory::changeInventorySlot(int pos, AddRemove ar, Item item) {
-
-  int starting_index = VertexArrayIndexFromPosition(pos);
-
-  // For now, just changing the color
-  // Will need to update texture coords later
-  switch (ar) {
-  case ADD:
-    array[starting_index + 0].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[starting_index + 1].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[starting_index + 2].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[starting_index + 3].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[starting_index + 4].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[starting_index + 5].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    break;
-  case REMOVE:
-    array[starting_index + 0].color = sf::Color(TRANSPARENT);
-    array[starting_index + 1].color = sf::Color(TRANSPARENT);
-    array[starting_index + 2].color = sf::Color(TRANSPARENT);
-    array[starting_index + 3].color = sf::Color(TRANSPARENT);
-    array[starting_index + 4].color = sf::Color(TRANSPARENT);
-    array[starting_index + 5].color = sf::Color(TRANSPARENT);
-    break;
-  }
+// Translates an array position in inventory or slot_filled
+// into the starting vertex in array for the item
+inline int Inventory::VertexArrayIndexFromSlot(int pos) {
+  int index_start = (SLOTS + 1) * 6;
+  int index = pos * 6 + index_start;
+  return index;
 }
 
 // Translates an array position in inventory or slot_filled
-// into the starting vertex in array
-inline int Inventory::VertexArrayIndexFromPosition(int pos) {
-  int index_start = (SLOTS + 1) * 6;
-  int index = pos * 6 + index_start;
+// into the starting vertex in array for the slot
+inline int Inventory::BackgroundVertexArrayIndexFromSlot(int pos) {
+  int index = (pos * 6) + 6;
   return index;
 }
 
@@ -118,6 +103,111 @@ inline int Inventory::getFirstFreeSlot() {
   return -1;
 }
 
+// Given an x,y position, determine if it's within a slot and if so, return the
+// index of that slot. Returns -1 if positoin does not fall within a slot
+inline int Inventory::getVertexFromPosition(sf::Vector2i pos) {
+  // Check overall bounds
+  int first = BackgroundVertexArrayIndexFromSlot(0);
+  int end = BackgroundVertexArrayIndexFromSlot(SLOTS - 1) + 2;
+  sf::Vector2f start_slot = array[first].position;
+  sf::Vector2f end_slot = array[end].position;
+
+  if (pos.x < start_slot.x || pos.x > end_slot.x || pos.y < start_slot.y ||
+      pos.y > end_slot.y) {
+    return -1;
+  }
+
+  // Find x
+  int x;
+  for (x = 0; x < COLUMNS; x++) {
+    int UpLeft = BackgroundVertexArrayIndexFromSlot(x);
+    int UpRight = UpLeft + 1;
+
+    // We've passed the mouse position
+    if (pos.x < array[UpLeft].position.x)
+      return -1;
+
+    if (pos.x >= array[UpLeft].position.x && pos.x <= array[UpRight].position.x)
+      break;
+  }
+
+  // Find y
+  int y;
+  for (y = 0; y < ROWS; y++) {
+    int index = y * COLUMNS + x;
+    int UpLeft = BackgroundVertexArrayIndexFromSlot(index);
+    int DownLeft = UpLeft + 2;
+
+    // We've passed the mouse position
+    if (pos.y < array[UpLeft].position.y)
+      return -1;
+
+    if (pos.y >= array[UpLeft].position.y &&
+        pos.y <= array[DownLeft].position.y)
+      break;
+  }
+
+  int ret = y * COLUMNS + x;
+  return ret;
+}
+
+inline void Inventory::updateTextures(int index) {
+  int vector_index;
+  bool tex;
+  Item item;
+  if (index == FLOATING_INDEX) {
+    vector_index = FLOATING_INDEX;
+    tex = moving;
+    item = floating_item;
+  } else {
+    vector_index = VertexArrayIndexFromSlot(index);
+    tex = slot_filled[index];
+    item = inventory[index];
+  }
+
+  if (tex) {
+
+    sf::Vector2f texStart = item.getTexturePosition();
+
+    sf::Vector2f UpLeft = texStart,
+                 UpRight(texStart.x + TEXTURE_WIDTH, texStart.y),
+                 DownLeft(texStart.x, texStart.y + TEXTURE_HEIGHT),
+                 DownRight(texStart.x + TEXTURE_WIDTH,
+                           texStart.y + TEXTURE_HEIGHT);
+
+    /*
+    array[vector_index + 0].texCoords = UpLeft;
+    array[vector_index + 1].texCoords = UpRight;
+    array[vector_index + 2].texCoords = DownRight;
+    array[vector_index + 3].texCoords = DownRight;
+    array[vector_index + 4].texCoords = DownLeft;
+    array[vector_index + 5].texCoords = UpLeft;
+    */
+    /*
+    array[vector_index + 0].color = sf::Color(SLOT_COLOR + 0xE0101000);
+    array[vector_index + 1].color = sf::Color(SLOT_COLOR + 0xE0101000);
+    array[vector_index + 2].color = sf::Color(SLOT_COLOR + 0xE0101000);
+    array[vector_index + 3].color = sf::Color(SLOT_COLOR + 0xE0101000);
+    array[vector_index + 4].color = sf::Color(SLOT_COLOR + 0xE0101000);
+    array[vector_index + 5].color = sf::Color(SLOT_COLOR + 0xE0101000);
+    */
+
+    array[vector_index + 0].color = sf::Color(item.temp_color);
+    array[vector_index + 1].color = sf::Color(item.temp_color);
+    array[vector_index + 2].color = sf::Color(item.temp_color);
+    array[vector_index + 3].color = sf::Color(item.temp_color);
+    array[vector_index + 4].color = sf::Color(item.temp_color);
+    array[vector_index + 5].color = sf::Color(item.temp_color);
+  } else {
+    array[vector_index + 0].color = sf::Color(TRANSPARENT);
+    array[vector_index + 1].color = sf::Color(TRANSPARENT);
+    array[vector_index + 2].color = sf::Color(TRANSPARENT);
+    array[vector_index + 3].color = sf::Color(TRANSPARENT);
+    array[vector_index + 4].color = sf::Color(TRANSPARENT);
+    array[vector_index + 5].color = sf::Color(TRANSPARENT);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Public Methods
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,16 +217,17 @@ inline Inventory::Inventory(sf::Vector2f vec) {
 
   for (int i = 0; i < SLOTS; i++) {
     slot_filled[i] = false;
-    moving[i] = false;
   }
+  moving = false;
 
   // NOTE:
   // Explanation of vertexCount:
   // SLOTS  -- number of inventory slots
   // * 2    -- One for the base layer, one for the items layer
   // + 1    -- Background rectangle
+  // + 1    -- Floating inventory slot
   array = sf::VertexArray(sf::PrimitiveType::Triangles,
-                          ((SLOTS * 2) + 1) * VERTICES_PER_SQUARE);
+                          ((SLOTS * 2) + 2) * VERTICES_PER_SQUARE);
 
   sf::Vector2f UpLeft(start.x, start.y), UpRight(start.x + WIDTH, start.y),
       DownLeft(start.x, start.y + HEIGHT),
@@ -267,12 +358,65 @@ inline sf::VertexArray Inventory::getArray() { return array; }
 
 // Draws the inventory
 inline void Inventory::draw(sf::RenderWindow &window) {
+  sf::Vector2i mousePos = Controls::mousePosition();
   if (open) {
     if (Controls::tapped(sf::Mouse::Button::Left)) {
-      sf::Vector2i mousePos = Controls::mousePosition();
-      std::cout << "Mouse position: " << mousePos.x << " " << mousePos.y << "\n"
-                << std::flush;
+      int index = getVertexFromPosition(mousePos);
+      if (!moving) { // Not currently moving
+        if (slot_filled[index]) {
+          moving = true;
+          mouse_start = mousePos;
+          if (index != -1) {
+            floating_item = inventory[index];
+            removeItem(index);
+            updateTextures(index);
+            updateTextures(FLOATING_INDEX);
+            /*
+            int vertex_index = VertexArrayIndexFromSlot(index);
+            for (int i = 0; i < VERTICES_PER_SQUARE; i++) {
+              // slot_start_positions[i] = array[vertex_index + i].position;
+            }
+            */
+          }
+        }
+      } else { // Currently moving an item
+        // swap items
+        // replace held item
+
+        bool temp_filled = slot_filled[index];
+        Item temp_item = inventory[index];
+        moving = slot_filled[index];
+
+        slot_filled[index] = true;
+        inventory[index] = floating_item;
+
+        if (temp_filled) {
+          floating_item = temp_item;
+        } else {
+          floating_item = Item();
+        }
+        updateTextures(FLOATING_INDEX);
+        updateTextures(index);
+      }
     }
+
+    if (moving) {
+      float x_offset = (WIDTH / COLUMNS / 2);
+      float y_offset = (HEIGHT / ROWS / 2);
+
+      sf::Vector2f UpLeft(mousePos.x - x_offset, mousePos.y - y_offset),
+          UpRight(mousePos.x + x_offset, mousePos.y - y_offset),
+          DownLeft(mousePos.x - x_offset, mousePos.y + y_offset),
+          DownRight(mousePos.x + x_offset, mousePos.y + y_offset);
+
+      array[FLOATING_INDEX + 0].position = UpLeft;
+      array[FLOATING_INDEX + 1].position = UpRight;
+      array[FLOATING_INDEX + 2].position = DownRight;
+      array[FLOATING_INDEX + 3].position = DownRight;
+      array[FLOATING_INDEX + 4].position = DownLeft;
+      array[FLOATING_INDEX + 5].position = UpLeft;
+    }
+
     window.draw(array);
   }
 }
@@ -284,7 +428,7 @@ inline void Inventory::insertItem(int pos, Item item) {
   }
   slot_filled[pos] = true;
   inventory[pos] = item;
-  changeInventorySlot(pos, ADD, item);
+  updateTextures(pos);
 }
 
 // Remove item at position
@@ -294,7 +438,7 @@ inline void Inventory::removeItem(int pos) {
   }
   slot_filled[pos] = false;
   inventory[pos] = Item();
-  changeInventorySlot(pos, REMOVE);
+  updateTextures(pos);
 }
 
 // Generic add item to inventory
