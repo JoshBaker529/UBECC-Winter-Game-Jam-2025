@@ -79,7 +79,7 @@ public:
 
 // Translates an array position in inventory or slot_filled
 // into the starting vertex in array for the item
-inline int Inventory::VertexArrayIndexFromSlot(int pos) {
+int Inventory::VertexArrayIndexFromSlot(int pos) {
   int index_start = (SLOTS + 1) * 6;
   int index = pos * 6 + index_start;
   return index;
@@ -87,14 +87,14 @@ inline int Inventory::VertexArrayIndexFromSlot(int pos) {
 
 // Translates an array position in inventory or slot_filled
 // into the starting vertex in array for the slot
-inline int Inventory::BackgroundVertexArrayIndexFromSlot(int pos) {
+int Inventory::BackgroundVertexArrayIndexFromSlot(int pos) {
   int index = (pos * 6) + 6;
   return index;
 }
 
 // Retrieves the index of first slot that doesn't have an item
 // Returns -1 if no empty slot
-inline int Inventory::getFirstFreeSlot() {
+int Inventory::getFirstFreeSlot() {
   for (int i = 0; i < SLOTS; i++) {
     if (!slot_filled[i]) {
       return i;
@@ -105,7 +105,7 @@ inline int Inventory::getFirstFreeSlot() {
 
 // Given an x,y position, determine if it's within a slot and if so, return the
 // index of that slot. Returns -1 if positoin does not fall within a slot
-inline int Inventory::getVertexFromPosition(sf::Vector2i pos) {
+int Inventory::getVertexFromPosition(sf::Vector2i pos) {
   // Check overall bounds
   int first = BackgroundVertexArrayIndexFromSlot(0);
   int end = BackgroundVertexArrayIndexFromSlot(SLOTS - 1) + 2;
@@ -151,7 +151,7 @@ inline int Inventory::getVertexFromPosition(sf::Vector2i pos) {
   return ret;
 }
 
-inline void Inventory::updateTextures(int index) {
+void Inventory::updateTextures(int index) {
   int vector_index;
   bool tex;
   Item item;
@@ -212,7 +212,7 @@ inline void Inventory::updateTextures(int index) {
 // Public Methods
 ////////////////////////////////////////////////////////////////////////////////
 
-inline Inventory::Inventory(sf::Vector2f vec) {
+Inventory::Inventory(sf::Vector2f vec) {
   start = vec;
 
   for (int i = 0; i < SLOTS; i++) {
@@ -343,21 +343,21 @@ inline Inventory::Inventory(sf::Vector2f vec) {
   }
 }
 
-inline Inventory::~Inventory() {
+Inventory::~Inventory() {
   // idk, I'm not using pointers ..
 }
 
 // returns the bool if the inventory is open
-inline bool Inventory::isOpen() { return open; }
+bool Inventory::isOpen() { return open; }
 
 // Toggles the displaying of the inventory screen
-inline void Inventory::toggleOpen() { open ^= 1; }
+void Inventory::toggleOpen() { open ^= 1; }
 
 // Gets the vertex array
-inline sf::VertexArray Inventory::getArray() { return array; }
+sf::VertexArray Inventory::getArray() { return array; }
 
 // Draws the inventory
-inline void Inventory::draw(sf::RenderWindow &window) {
+void Inventory::draw(sf::RenderWindow &window) {
   sf::Vector2i mousePos = Controls::mousePosition();
   if (open) {
     if (Controls::tapped(sf::Mouse::Button::Left)) {
@@ -422,7 +422,7 @@ inline void Inventory::draw(sf::RenderWindow &window) {
 }
 
 // Insert item at position
-inline void Inventory::insertItem(int pos, Item item) {
+void Inventory::insertItem(int pos, Item item) {
   if (pos < 0 || pos > SLOTS) {
     return;
   }
@@ -432,7 +432,7 @@ inline void Inventory::insertItem(int pos, Item item) {
 }
 
 // Remove item at position
-inline void Inventory::removeItem(int pos) {
+void Inventory::removeItem(int pos) {
   if (pos < 0 || pos > SLOTS) {
     return;
   }
@@ -444,7 +444,7 @@ inline void Inventory::removeItem(int pos) {
 // Generic add item to inventory
 // Equivalent to InsertItem(int, Item)
 // Where int is the first open slot;
-inline void Inventory::addItem(Item item) {
+void Inventory::addItem(Item item) {
   int pos = getFirstFreeSlot();
   if (pos < 0) {
     return;
