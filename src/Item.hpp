@@ -71,6 +71,8 @@ private:
 public:
   Item(std::string, sf::Vector2f, int, int, TypeFlags, actionFunction = NULL,
        tooltipFunction = NULL);
+  Item(std::string, sf::Vector2f, int, int, TypeFlags, float, float, float,
+       float, float, actionFunction = NULL, tooltipFunction = NULL);
   void setConsumableStats(float, float, float);
   void setEquipableStats(float, float);
   void draw(sf::RenderWindow &);
@@ -78,6 +80,15 @@ public:
   sf::Vector2f getTexturePosition();
   std::string getName();
   int getQuantity();
+  int getMaxStack();
+  TypeFlags getType();
+  float getHpGained();
+  float getHungerGained();
+  float getWarmthGained();
+  float getDefenseGained();
+  float getColdResist();
+  void setQuantity(int);
+
   void debugPrint();
 
   Item();
@@ -97,11 +108,17 @@ inline Item::Item(std::string name, sf::Vector2f texture, int quantity,
       max_stack_size(max_stack), type(type), hp_gained(0), hunger_gained(0),
       warmth_gained(0), defense(0), cold_resist(0), useAction(action),
       tooltipHover(hover) {
-  // INFO:
-  // Constructor intentionally left blank, everything is in initialization
-  // list.
-  // See setConsumableStats and setEquipableStats for the stats that are
-  // not listed here
+  temp_color = 0xEBBBBBFF;
+};
+
+inline Item::Item(std::string name, sf::Vector2f texture, int quantity,
+                  int max_stack, TypeFlags type, float hp, float hunger,
+                  float warmth, float def, float cold, actionFunction action,
+                  tooltipFunction hover)
+    : name(name), texture_position(texture), stack_size(quantity),
+      max_stack_size(max_stack), type(type), hp_gained(hp),
+      hunger_gained(hunger), warmth_gained(warmth), defense(def),
+      cold_resist(cold), useAction(action), tooltipHover(hover) {
   temp_color = 0xEBBBBBFF;
 };
 
@@ -153,6 +170,22 @@ sf::Vector2f Item::getTexturePosition() { return texture_position; }
 std::string Item::getName() { return name; }
 
 int Item::getQuantity() { return stack_size; }
+
+int Item::getMaxStack() { return max_stack_size; }
+
+TypeFlags Item::getType() { return type; }
+
+float Item::getHpGained() { return hp_gained; }
+
+float Item::getHungerGained() { return hunger_gained; }
+
+float Item::getWarmthGained() { return warmth_gained; }
+
+float Item::getDefenseGained() { return defense; }
+
+float Item::getColdResist() { return cold_resist; }
+
+void Item::setQuantity(int qty) { stack_size = qty; }
 
 void Item::debugPrint() {
   printf("Name: %s, Texture: %f %f, Color: %x\n", name.c_str(),
