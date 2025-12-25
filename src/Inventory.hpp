@@ -117,6 +117,7 @@ private:
   void updateTextures(int);
   void initItemQuantities();
   void updateCraftableList();
+  int getCraftingFromPosition(sf::Vector2i);
   // void DrawCrafting(sf::RenderWindow);
 
 public:
@@ -127,7 +128,9 @@ public:
   sf::VertexArray getArray();
   void insertItem(int, Item);
   void removeItem(int);
+  void removeItem(std::string, int);
   void addItem(Item);
+
   void setCraftingFlags(CraftingFlags);
 
   void printCrafting();
@@ -330,8 +333,8 @@ void Inventory::initItemQuantities() {
 
 void Inventory::updateCraftableList() {
   craftable_list = crafting.getCraftable(item_quantities, crafting_flags);
-
-  for (int i = 0; i < craftable_list.size(); i++) {
+  int i;
+  for (i = 0; i < craftable_list.size(); i++) {
     int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
     crafting_array[index + 0].color = sf::Color(SLOT_COLOR);
     crafting_array[index + 1].color = sf::Color(SLOT_COLOR);
@@ -361,6 +364,43 @@ void Inventory::updateCraftableList() {
       }
     }
   }
+
+  for (; i < CRAFTING_RECIPES_SHOWN; i++) {
+
+    int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
+    crafting_array[index + 0].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 1].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 2].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 3].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 4].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 5].color = sf::Color(TRANSPARENT);
+
+    for (int ingredient = 0; ingredient < crafting.getMaxIngredients();
+         ingredient++) {
+      index += 6;
+
+      crafting_array[index + 0].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 1].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 2].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 3].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 4].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 5].color = sf::Color(TRANSPARENT);
+    }
+  }
+}
+
+int Inventory::getCraftingFromPosition(sf::Vector2i pos) {
+  if (pos.x < 0 || pos.x > CRAFTING_ICON_WIDTH)
+    return -1;
+  if (pos.y < start.y + HEIGHT)
+    return -1;
+  for (int i = 0; i < CRAFTING_RECIPES_SHOWN; i++) {
+    int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
+    if (pos.y >= crafting_array[i].position.y &&
+        pos.y <= crafting_array[i + 2].position.y)
+      return i;
+  }
+  return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -626,11 +666,37 @@ void Inventory::removeItem(int pos) {
   if (pos < 0 || pos > SLOTS) {
     return;
   }
+
   Item item = inventory[pos];
   item_quantities[item.getName()] -= item.getQuantity();
   slot_filled[pos] = false;
   inventory[pos] = Item();
   updateTextures(pos);
+  // item_quantities[item.getName()] -= item.getQuantity();
+  updateCraftableList();
+}
+
+// Generic remove item from inventory
+// Is unsafe, will not check if there is enough items already in inventory
+void Inventory::removeItem(std::string item, int qty) {
+
+  for (int i = 0; i < SLOTS; i++) {
+    if (!slot_filled[i])
+      continue;
+    if (inventory[i].getName() != item)
+      continue;
+    if (inventory[i].getQuantity() > qty) {
+      inventory[i].addQuantity(-qty);
+      item_quantities[item] -= qty;
+      break;
+    } else if (inventory[i].getQuantity() == qty) {
+      removeItem(i);
+      break;
+    } else {
+      qty -= inventory[i].getQuantity();
+      removeItem(i);
+    }
+  }
   updateCraftableList();
 }
 
@@ -683,10 +749,15 @@ void Inventory::printCrafting() {
 
 // Debug printing to console the contents item_quantities
 void Inventory::printInventory() {
-  std::cout << "Inventory: \n";
+  std::cout << "\nitem_quantities: \n";
   for (auto it = item_quantities.begin(); it != item_quantities.end(); it++) {
-    std::cout << it->first << " x" << it->second << std::endl;
+    std::cout << it->first << " x" << it->second << '\n';
   }
+  std::cout << "Inventory:\n";
+  for (auto it = inventory.begin(); it != inventory.end(); it++)
+    std::cout << it->getName() << " x" << it->getQuantity() << '\n';
+
+  std::cout << "Finished" << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -696,85 +767,149 @@ void Inventory::printInventory() {
 // Draws the inventory
 void Inventory::draw(sf::RenderWindow &window) {
   sf::Vector2i mousePos = Controls::mousePosition();
-  if (open) {
-    // BUG: For some reason this isn't working
-    if (Controls::tapped(sf::Mouse::Button::Right)) {
-      std::cout << "kjn" << std::endl;
-      if (!moving) {
-        int index = getVertexFromPosition(mousePos);
-        if (slot_filled[index]) {
-          moving = true;
+  if (!open) {
+    return;
+  }
+  if (Controls::tapped(sf::Mouse::Button::Right)) {
+    if (!moving) {
+      int index = getVertexFromPosition(mousePos);
+      if (slot_filled[index]) {
+        moving = true;
+        floating_item = inventory[index];
+        floating_item.setQuantity(floating_item.getQuantity() / 2);
+        inventory[index].addQuantity(-floating_item.getQuantity());
+        updateTextures(FLOATING_INDEX);
+      }
+    }
+  } else if (Controls::tapped(sf::Mouse::Button::Left)) {
+    int index = getVertexFromPosition(mousePos);
+    if (!moving) { // Not currently moving
+      if (slot_filled[index]) {
+        moving = true;
+        if (index != -1) {
           floating_item = inventory[index];
-          floating_item.setQuantity(floating_item.getQuantity() / 2);
-          inventory[index].addQuantity(-floating_item.getQuantity());
+          removeItem(index);
+          updateTextures(index);
           updateTextures(FLOATING_INDEX);
         }
       }
-    } else if (Controls::tapped(sf::Mouse::Button::Left)) {
-      int index = getVertexFromPosition(mousePos);
-      if (!moving) { // Not currently moving
-        if (slot_filled[index]) {
-          moving = true;
-          if (index != -1) {
-            floating_item = inventory[index];
-            removeItem(index);
-            updateTextures(index);
-            updateTextures(FLOATING_INDEX);
+      index = getCraftingFromPosition(mousePos);
+      if (index != -1 && index + crafting_position < craftable_list.size()) {
+        floating_item = craftable_list[index + crafting_position].output;
+        moving = true;
+        updateTextures(FLOATING_INDEX);
+        int end = craftable_list[index + crafting_position].ingredients.size();
+        for (int i = 0; i < end; i++) {
+
+          auto j = craftable_list[index + crafting_position].ingredients[i];
+          // printInventory();
+          removeItem(j.first, j.second);
+        }
+      }
+    } else { // Currently moving an item
+
+      if (inventory[index].getName() == floating_item.getName()) {
+        // items are the same, add to stack
+        int empty =
+            inventory[index].getMaxStack() - inventory[index].getQuantity();
+        if (empty > 0) {
+          if (empty > floating_item.getQuantity()) {
+            inventory[index].addQuantity(floating_item.getQuantity());
+            item_quantities[inventory[index].getName()] +=
+                floating_item.getQuantity();
+            floating_item = Item();
+            moving = false;
+          } else {
+            inventory[index].addQuantity(empty);
+            item_quantities[inventory[index].getName()] += empty;
+
+            floating_item.addQuantity(-empty); // lol I guess this works
           }
         }
-      } else { // Currently moving an item
 
-        if (inventory[index].getName() == floating_item.getName()) {
-          // items are the same, add to stack
-          int empty =
-              inventory[index].getMaxStack() - inventory[index].getQuantity();
-          if (empty > 0) {
-            if (empty > floating_item.getQuantity()) {
-              inventory[index].addQuantity(floating_item.getQuantity());
-              floating_item = Item();
-              moving = false;
-            } else {
-              inventory[index].addQuantity(empty);
-              floating_item.addQuantity(-empty); // lol I guess this works
-            }
-          }
+      } else {
+        // Swap items
 
-        } else {
-          // Swap items
+        int index = getVertexFromPosition(mousePos);
 
+        if (index != -1) {
+          std::cout << "Swapping" << std::endl;
           bool temp_filled = slot_filled[index];
           Item temp_item = inventory[index];
           moving = slot_filled[index];
 
           slot_filled[index] = true;
           inventory[index] = floating_item;
+          item_quantities[floating_item.getName()] +=
+              floating_item.getQuantity();
 
           if (temp_filled) {
             floating_item = temp_item;
+            item_quantities[temp_item.getName()] -= temp_item.getQuantity();
           } else {
             floating_item = Item();
           }
+
+          updateTextures(FLOATING_INDEX);
+          updateTextures(index);
         }
-        updateTextures(FLOATING_INDEX);
-        updateTextures(index);
       }
     }
+    updateCraftableList();
+  }
 
-    window.draw(array);
+  window.draw(array);
 
-    // BUG: For some reason, I get an error when closing since adding this...
-    // Just the text sections
-    for (int slot = 0; slot < SLOTS; slot++) {
-      if (inventory[slot].getQuantity() <= 1)
-        continue;
-      sf::Vector2f position =
-          array[VertexArrayIndexFromSlot(slot) + 2].position;
+  for (int slot = 0; slot < SLOTS; slot++) {
+    if (inventory[slot].getQuantity() <= 1)
+      continue;
+    sf::Vector2f position = array[VertexArrayIndexFromSlot(slot) + 2].position;
 
-      sf::Text text(font, std::to_string(inventory[slot].getQuantity()));
+    sf::Text text(font, std::to_string(inventory[slot].getQuantity()));
+    unsigned int size = text.getCharacterSize() + 2;
+    position.y -= size;
+    // Compensate for either 1 or 2 digits
+    if (inventory[slot].getQuantity() / 10 > 0) {
+      size += TWO_DIGITS;
+    } else {
+      size += ONE_DIGIT;
+    }
+    position.x -= size;
+
+    text.setPosition(position);
+    text.setFillColor(sf::Color(TEXT_FILL));
+    text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
+    text.setOutlineThickness(TEXT_OUTLINE_SIZE);
+    text.setStyle(sf::Text::Style::Bold);
+
+    window.draw(text);
+  }
+
+  if (moving) {
+    float x_offset = (WIDTH / COLUMNS / 2);
+    float y_offset = (HEIGHT / ROWS / 2);
+
+    sf::Vector2f UpLeft(mousePos.x - x_offset, mousePos.y - y_offset),
+        UpRight(mousePos.x + x_offset, mousePos.y - y_offset),
+        DownLeft(mousePos.x - x_offset, mousePos.y + y_offset),
+        DownRight(mousePos.x + x_offset, mousePos.y + y_offset);
+
+    floating_icon[0].position = UpLeft;
+    floating_icon[1].position = UpRight;
+    floating_icon[2].position = DownRight;
+    floating_icon[3].position = DownRight;
+    floating_icon[4].position = DownLeft;
+    floating_icon[5].position = UpLeft;
+    window.draw(floating_icon);
+
+    if (floating_item.getQuantity() > 1) {
+      sf::Vector2f position = floating_icon[2].position;
+
+      sf::Text text(font, std::to_string(floating_item.getQuantity()));
       unsigned int size = text.getCharacterSize() + 2;
       position.y -= size;
       // Compensate for either 1 or 2 digits
-      if (inventory[slot].getQuantity() / 10 > 0) {
+      if (floating_item.getQuantity() / 10 > 0) {
         size += TWO_DIGITS;
       } else {
         size += ONE_DIGIT;
@@ -789,75 +924,35 @@ void Inventory::draw(sf::RenderWindow &window) {
 
       window.draw(text);
     }
+  } else {
+    // Only draw text if not holding item
+    int index = getVertexFromPosition(mousePos);
+    if (index >= 0 && slot_filled[index]) {
+      sf::Text text(font, inventory[index].getTooltip());
+      text.setPosition(sf::Vector2f{static_cast<float>(mousePos.x),
+                                    static_cast<float>(mousePos.y)});
+      text.setFillColor(sf::Color(TEXT_FILL));
+      text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
+      text.setOutlineThickness(TEXT_OUTLINE_SIZE);
+      text.setScale(sf::Vector2f{0.9, 0.9});
+      text.setLineSpacing(0.9f);
 
-    if (moving) {
-      float x_offset = (WIDTH / COLUMNS / 2);
-      float y_offset = (HEIGHT / ROWS / 2);
+      sf::FloatRect fr = text.getGlobalBounds();
+      text.move(
+          sf::Vector2f{-(fr.size.x + TOOLTIP_OFFSET_LEFT), -TOOLTIP_OFFSET_UP});
+      fr = text.getGlobalBounds();
 
-      sf::Vector2f UpLeft(mousePos.x - x_offset, mousePos.y - y_offset),
-          UpRight(mousePos.x + x_offset, mousePos.y - y_offset),
-          DownLeft(mousePos.x - x_offset, mousePos.y + y_offset),
-          DownRight(mousePos.x + x_offset, mousePos.y + y_offset);
+      sf::RectangleShape rect(fr.size +
+                              sf::Vector2f{TEXTBOX_BORDER, TEXTBOX_BORDER});
+      rect.setPosition(fr.position -
+                       sf::Vector2f{TEXTBOX_OFFSET, TEXTBOX_OFFSET});
+      rect.setFillColor(sf::Color(TOOLTOP_BACKGROUND_COLOR));
 
-      floating_icon[0].position = UpLeft;
-      floating_icon[1].position = UpRight;
-      floating_icon[2].position = DownRight;
-      floating_icon[3].position = DownRight;
-      floating_icon[4].position = DownLeft;
-      floating_icon[5].position = UpLeft;
-      window.draw(floating_icon);
-
-      if (floating_item.getQuantity() > 1) {
-        sf::Vector2f position = floating_icon[2].position;
-
-        sf::Text text(font, std::to_string(floating_item.getQuantity()));
-        unsigned int size = text.getCharacterSize() + 2;
-        position.y -= size;
-        // Compensate for either 1 or 2 digits
-        if (floating_item.getQuantity() / 10 > 0) {
-          size += TWO_DIGITS;
-        } else {
-          size += ONE_DIGIT;
-        }
-        position.x -= size;
-
-        text.setPosition(position);
-        text.setFillColor(sf::Color(TEXT_FILL));
-        text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
-        text.setOutlineThickness(TEXT_OUTLINE_SIZE);
-        text.setStyle(sf::Text::Style::Bold);
-
-        window.draw(text);
-      }
-    } else {
-      // Only draw text if not holding item
-      int index = getVertexFromPosition(mousePos);
-      if (index >= 0 && slot_filled[index]) {
-        sf::Text text(font, inventory[index].getTooltip());
-        text.setPosition(sf::Vector2f{static_cast<float>(mousePos.x),
-                                      static_cast<float>(mousePos.y)});
-        text.setFillColor(sf::Color(TEXT_FILL));
-        text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
-        text.setOutlineThickness(TEXT_OUTLINE_SIZE);
-        text.setScale(sf::Vector2f{0.9, 0.9});
-        text.setLineSpacing(0.9f);
-
-        sf::FloatRect fr = text.getGlobalBounds();
-        text.move(sf::Vector2f{-(fr.size.x + TOOLTIP_OFFSET_LEFT),
-                               -TOOLTIP_OFFSET_UP});
-        fr = text.getGlobalBounds();
-
-        sf::RectangleShape rect(fr.size +
-                                sf::Vector2f{TEXTBOX_BORDER, TEXTBOX_BORDER});
-        rect.setPosition(fr.position -
-                         sf::Vector2f{TEXTBOX_OFFSET, TEXTBOX_OFFSET});
-        rect.setFillColor(sf::Color(TOOLTOP_BACKGROUND_COLOR));
-
-        window.draw(rect);
-        window.draw(text);
-      }
+      window.draw(rect);
+      window.draw(text);
     }
   }
+
   drawCrafting(window);
 }
 

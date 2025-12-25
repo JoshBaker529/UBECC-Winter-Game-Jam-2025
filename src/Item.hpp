@@ -205,7 +205,9 @@ Item::Item()
     : name(""), texture_position(sf::Vector2f{0, 0}), stack_size(0),
       max_stack_size(0), type(0), hp_gained(0), hunger_gained(0),
       warmth_gained(0), defense(0), cold_resist(0), useAction(0),
-      tooltipHover(0) {}
+      tooltipHover(0) {
+  temp_color = 0;
+}
 
 // Destructor, kinda useless
 Item::~Item() {
