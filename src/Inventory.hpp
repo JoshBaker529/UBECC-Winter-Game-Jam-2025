@@ -19,11 +19,6 @@
 #include <string>
 #include <vector>
 
-// TODO:
-// Add automatic updating of the crafting list and displaying
-// Fully implement the ability to craft items from inventory
-// Add CraftingFlags togglables
-
 ////////////////////////////////////////////////////////////////////////////////
 // Defines, because magic numbers are bad :D
 ////////////////////////////////////////////////////////////////////////////////
@@ -80,6 +75,16 @@
 #define CRAFTING_RECIPES_SHOWN 10
 #define CRAFTING_START (sf::Vector2f{0, start.y + HEIGHT})
 
+// Crafting flag array positions
+#define CRAFTING_FLAG_BENCH_INDEX 0
+#define CRAFTING_FLAG_FIRE_INDEX 1
+#define CRAFTING_FLAG_EMPTY1_INDEX 2
+#define CRAFTING_FLAG_EMPTY2_INDEX 3
+#define CRAFTING_FLAG_EMPTY3_INDEX 4
+#define CRAFTING_FLAG_EMPTY4_INDEX 5
+#define CRAFTING_FLAG_EMPTY5_INDEX 6
+#define CRAFTING_FLAG_EMPTY6_INDEX 7
+
 // Variables to hold where the starting positions are for moving an item
 
 // The font used
@@ -98,6 +103,7 @@ private:
 
   std::array<Item, SLOTS> inventory;
   std::array<bool, SLOTS> slot_filled;
+  std::array<int, 8> flag_counts;
 
   bool open;
   bool moving;
@@ -132,6 +138,10 @@ public:
   void addItem(Item);
 
   void setCraftingFlags(CraftingFlags);
+  void craftingFlagSetFire();
+  void craftingFlagSetBench();
+  void craftingFlagClearFire();
+  void craftingFlagClearBench();
 
   void printCrafting();
   void printInventory();
@@ -415,9 +425,12 @@ Inventory::Inventory(sf::Vector2f vec) {
   for (int i = 0; i < SLOTS; i++) {
     slot_filled[i] = false;
   }
+  for (int i = 0; i < 8; i++) {
+    flag_counts[i] = 0;
+  }
   moving = false;
   open = false;
-  crafting_flags = NO_FLAG;
+  crafting_flags = 0;
   crafting_position = 0;
 
   // NOTE:
@@ -735,6 +748,36 @@ void Inventory::addItem(Item item) {
 // Sets the current crafting flags - shows what objects we're close to
 void Inventory::setCraftingFlags(CraftingFlags flags) {
   crafting_flags = flags;
+  updateCraftableList();
+}
+
+void Inventory::craftingFlagSetFire() {
+  crafting_flags |= FIRE;
+  flag_counts[CRAFTING_FLAG_FIRE_INDEX]++;
+  updateCraftableList();
+}
+
+void Inventory::craftingFlagSetBench() {
+  crafting_flags |= CRAFTING_BENCH;
+  flag_counts[CRAFTING_FLAG_BENCH_INDEX]++;
+  updateCraftableList();
+}
+
+void Inventory::craftingFlagClearFire() {
+  if (--flag_counts[CRAFTING_FLAG_FIRE_INDEX] <= 0) {
+    // I don't want to be safe incase you call this and it's already 0;"
+    flag_counts[CRAFTING_FLAG_FIRE_INDEX] = 0;
+    crafting_flags &= (~FIRE);
+  }
+  updateCraftableList();
+}
+
+void Inventory::craftingFlagClearBench() {
+  if (--flag_counts[CRAFTING_FLAG_BENCH_INDEX] <= 0) {
+    // I don't want to be safe incase you call this and it's already 0;
+    flag_counts[CRAFTING_FLAG_BENCH_INDEX] = 0;
+    crafting_flags &= (~CRAFTING_BENCH);
+  }
   updateCraftableList();
 }
 
