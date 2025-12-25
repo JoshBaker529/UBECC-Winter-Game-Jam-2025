@@ -17,6 +17,7 @@
 #include <array>
 #include <iostream>
 #include <string>
+#include <vector>
 
 // TODO:
 // Add automatic updating of the crafting list and displaying
@@ -28,8 +29,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // Size
-#define WIDTH 700.f
-#define HEIGHT 300.f
+// For best results, make sure these are multiples of COLUMNS and ROWS
+#define WIDTH 350.f
+#define HEIGHT 150.f
 
 // Number of slots
 #define SLOTS 21
@@ -68,6 +70,16 @@
 // WARN: Not actually a valid array index!!
 #define FLOATING_INDEX (VertexArrayIndexFromSlot(SLOTS - 1) + 6)
 
+// Crafting constants
+#define CRAFTING_ICON_WIDTH 50.f
+#define CRAFTING_ICON_HEIGHT 50.f
+#define CRAFTING_INGREDIENT_WIDTH 25.f
+#define CRAFTING_INGREDIENT_HEIGHT 25.f
+#define CRAFTING_TEXT_WIDTH (CRAFTING_SECTION_WIDTH - CRAFTING_ICON_WIDTH)
+#define CRAFTING_TEXT_HEIGHT CRAFTING_ICON_HEIGHT
+#define CRAFTING_RECIPES_SHOWN 10
+#define CRAFTING_START (sf::Vector2f{0, start.y + HEIGHT})
+
 // Variables to hold where the starting positions are for moving an item
 
 // The font used
@@ -81,15 +93,22 @@ class Inventory {
 private:
   sf::Vector2f start;
   sf::VertexArray array;
-  bool open;
+  sf::VertexArray floating_icon;
+  sf::VertexArray crafting_array;
+
   std::array<Item, SLOTS> inventory;
   std::array<bool, SLOTS> slot_filled;
+
+  bool open;
   bool moving;
-  sf::VertexArray floating_icon;
+
   Item floating_item;
   ItemQuantities item_quantities;
   Crafting crafting;
   CraftingFlags crafting_flags;
+
+  std::vector<Recipe> craftable_list;
+  int crafting_position;
 
   int VertexArrayIndexFromSlot(int);
   int BackgroundVertexArrayIndexFromSlot(int);
@@ -97,6 +116,8 @@ private:
   int getVertexFromPosition(sf::Vector2i);
   void updateTextures(int);
   void initItemQuantities();
+  void updateCraftableList();
+  // void DrawCrafting(sf::RenderWindow);
 
 public:
   Inventory(sf::Vector2f);
@@ -113,6 +134,7 @@ public:
   void printInventory();
 
   void draw(sf::RenderWindow &);
+  void drawCrafting(sf::RenderWindow &);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -306,6 +328,41 @@ void Inventory::initItemQuantities() {
   }
 }
 
+void Inventory::updateCraftableList() {
+  craftable_list = crafting.getCraftable(item_quantities, crafting_flags);
+
+  for (int i = 0; i < craftable_list.size(); i++) {
+    int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
+    crafting_array[index + 0].color = sf::Color(SLOT_COLOR);
+    crafting_array[index + 1].color = sf::Color(SLOT_COLOR);
+    crafting_array[index + 2].color = sf::Color(SLOT_COLOR);
+    crafting_array[index + 3].color = sf::Color(SLOT_COLOR);
+    crafting_array[index + 4].color = sf::Color(SLOT_COLOR);
+    crafting_array[index + 5].color = sf::Color(SLOT_COLOR);
+
+    for (int ingredient = 0; ingredient < crafting.getMaxIngredients();
+         ingredient++) {
+      index += 6;
+      if (ingredient >= craftable_list[i].ingredients.size()) {
+        crafting_array[index + 0].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 1].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 2].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 3].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 4].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 5].color = sf::Color(TRANSPARENT);
+
+      } else {
+        crafting_array[index + 0].color = sf::Color(SLOT_COLOR);
+        crafting_array[index + 1].color = sf::Color(SLOT_COLOR);
+        crafting_array[index + 2].color = sf::Color(SLOT_COLOR);
+        crafting_array[index + 3].color = sf::Color(SLOT_COLOR);
+        crafting_array[index + 4].color = sf::Color(SLOT_COLOR);
+        crafting_array[index + 5].color = sf::Color(SLOT_COLOR);
+      }
+    }
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Public Methods
 ////////////////////////////////////////////////////////////////////////////////
@@ -319,7 +376,9 @@ Inventory::Inventory(sf::Vector2f vec) {
     slot_filled[i] = false;
   }
   moving = false;
+  open = false;
   crafting_flags = NO_FLAG;
+  crafting_position = 0;
 
   // NOTE:
   // Explanation of vertexCount:
@@ -356,7 +415,7 @@ Inventory::Inventory(sf::Vector2f vec) {
   float slot_height = HEIGHT / ROWS;
 
   float border_width = slot_width * .05;
-  float boarder_height = slot_height * .05;
+  float border_height = slot_height * .05;
 
   // Base Layer
   for (int slot = 0; slot < 21; slot++) {
@@ -366,11 +425,11 @@ Inventory::Inventory(sf::Vector2f vec) {
     }
 
     int index = slot * 6 + 6;
-    sf::Vector2f UpLeft(x + border_width, y + boarder_height),
-        UpRight(x + slot_width - border_width, y + boarder_height),
-        DownLeft(x + border_width, y + slot_height - boarder_height),
+    sf::Vector2f UpLeft(x + border_width, y + border_height),
+        UpRight(x + slot_width - border_width, y + border_height),
+        DownLeft(x + border_width, y + slot_height - border_height),
         DownRight(x + slot_width - border_width,
-                  y + slot_width - boarder_height);
+                  y + slot_width - border_height);
 
     array[index + 0].position = UpLeft;
     array[index + 1].position = UpRight;
@@ -400,11 +459,11 @@ Inventory::Inventory(sf::Vector2f vec) {
 
     int index_start = (SLOTS + 1) * 6;
     int index = slot * 6 + index_start;
-    sf::Vector2f UpLeft(x + border_width, y + boarder_height),
-        UpRight(x + slot_width - border_width, y + boarder_height),
-        DownLeft(x + border_width, y + slot_height - boarder_height),
+    sf::Vector2f UpLeft(x + border_width, y + border_height),
+        UpRight(x + slot_width - border_width, y + border_height),
+        DownLeft(x + border_width, y + slot_height - border_height),
         DownRight(x + slot_width - border_width,
-                  y + slot_width - boarder_height);
+                  y + slot_width - border_height);
 
     array[index + 0].position = UpLeft;
     array[index + 1].position = UpRight;
@@ -413,6 +472,7 @@ Inventory::Inventory(sf::Vector2f vec) {
     array[index + 4].position = DownLeft;
     array[index + 5].position = UpLeft;
 
+    /*
     if (slot_filled[slot]) {
       sf::Vector2f item_texture = inventory[slot].getTexturePosition();
       sf::Vector2f TextureUpLeft(item_texture),
@@ -434,14 +494,101 @@ Inventory::Inventory(sf::Vector2f vec) {
       array[index + 4].color = sf::Color(SLOT_COLOR + 0x30101000);
       array[index + 5].color = sf::Color(SLOT_COLOR + 0x30101000);
     } else {
-      array[index + 0].color = sf::Color(TRANSPARENT);
-      array[index + 1].color = sf::Color(TRANSPARENT);
-      array[index + 2].color = sf::Color(TRANSPARENT);
-      array[index + 3].color = sf::Color(TRANSPARENT);
-      array[index + 4].color = sf::Color(TRANSPARENT);
-      array[index + 5].color = sf::Color(TRANSPARENT);
-    }
+    */
+    array[index + 0].color = sf::Color(TRANSPARENT);
+    array[index + 1].color = sf::Color(TRANSPARENT);
+    array[index + 2].color = sf::Color(TRANSPARENT);
+    array[index + 3].color = sf::Color(TRANSPARENT);
+    array[index + 4].color = sf::Color(TRANSPARENT);
+    array[index + 5].color = sf::Color(TRANSPARENT);
+    //  }
     x += slot_width;
+  }
+
+  // NOTE:
+  // Explanation of vertexCount:
+  // CRAFTING_RECIPES_SHOWN   -- Number of recipes shown
+  // * maxIngredients + 1     -- Number of items per crafting recipe
+  //                          -- number of the ingredients + 1 for the result
+  crafting_array = sf::VertexArray(
+      sf::PrimitiveType::Triangles,
+      (CRAFTING_RECIPES_SHOWN * (crafting.getMaxIngredients() + 1)) *
+          VERTICES_PER_SQUARE);
+
+  float start_x = CRAFTING_START.x;
+  float start_y = CRAFTING_START.y;
+
+  for (int recipe = 0; recipe < CRAFTING_RECIPES_SHOWN; recipe++) {
+    x = start_x;
+    y = start_y;
+    slot_width = CRAFTING_ICON_WIDTH;
+    slot_height = CRAFTING_ICON_HEIGHT;
+
+    border_width = slot_width * .05;
+    border_height = slot_height * .05;
+
+    sf::Vector2f UpLeft(x + border_width, y + border_height),
+        UpRight(x + slot_width - border_width, y + border_height),
+        DownLeft(x + border_width, y + slot_height - border_height),
+        DownRight(x + slot_width - border_width,
+                  y + slot_width - border_height);
+
+    // Just trust me, this is correct
+    int index =
+        (recipe * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1)));
+
+    crafting_array[index + 0].position = UpLeft;
+    crafting_array[index + 1].position = UpRight;
+    crafting_array[index + 2].position = DownRight;
+    crafting_array[index + 3].position = DownRight;
+    crafting_array[index + 4].position = DownLeft;
+    crafting_array[index + 5].position = UpLeft;
+
+    crafting_array[index + 0].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 1].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 2].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 3].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 4].color = sf::Color(TRANSPARENT);
+    crafting_array[index + 5].color = sf::Color(TRANSPARENT);
+
+    // Prepare for the smaller icons
+    border_width = CRAFTING_INGREDIENT_WIDTH * .05;
+    border_height = CRAFTING_INGREDIENT_HEIGHT * .05;
+
+    UpLeft = sf::Vector2f(start_x + CRAFTING_ICON_WIDTH,
+                          start_y + (CRAFTING_INGREDIENT_HEIGHT / 2));
+    UpRight =
+        UpLeft + sf::Vector2f{CRAFTING_INGREDIENT_WIDTH - border_width, 0};
+    DownLeft =
+        UpLeft + sf::Vector2f{0, CRAFTING_INGREDIENT_HEIGHT - border_height};
+    DownRight =
+        DownLeft + sf::Vector2f{CRAFTING_INGREDIENT_WIDTH - border_width, 0};
+
+    for (int ingredient = 0; ingredient < crafting.getMaxIngredients();
+         ingredient++) {
+      index += 6;
+
+      crafting_array[index + 0].position = UpLeft;
+      crafting_array[index + 1].position = UpRight;
+      crafting_array[index + 2].position = DownRight;
+      crafting_array[index + 3].position = DownRight;
+      crafting_array[index + 4].position = DownLeft;
+      crafting_array[index + 5].position = UpLeft;
+
+      crafting_array[index + 0].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 1].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 2].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 3].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 4].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 5].color = sf::Color(TRANSPARENT);
+
+      UpLeft += sf::Vector2f{CRAFTING_INGREDIENT_WIDTH, 0};
+      UpRight += sf::Vector2f{CRAFTING_INGREDIENT_WIDTH, 0};
+      DownLeft += sf::Vector2f{CRAFTING_INGREDIENT_WIDTH, 0};
+      DownRight += sf::Vector2f{CRAFTING_INGREDIENT_WIDTH, 0};
+    }
+
+    start_y += CRAFTING_ICON_HEIGHT;
   }
 }
 
@@ -454,10 +601,97 @@ Inventory::~Inventory() {
 bool Inventory::isOpen() { return open; }
 
 // Toggles the displaying of the inventory screen
-void Inventory::toggleOpen() { open ^= 1; }
+void Inventory::toggleOpen() {
+  open ^= 1;
+  crafting_position = 0;
+}
 
 // Gets the vertex array
 sf::VertexArray Inventory::getArray() { return array; }
+
+// Insert item at position
+void Inventory::insertItem(int pos, Item item) {
+  if (pos < 0 || pos > SLOTS) {
+    return;
+  }
+  item_quantities[item.getName()] += item.getQuantity();
+  slot_filled[pos] = true;
+  inventory[pos] = item;
+  updateTextures(pos);
+  updateCraftableList();
+}
+
+// Remove item at position
+void Inventory::removeItem(int pos) {
+  if (pos < 0 || pos > SLOTS) {
+    return;
+  }
+  Item item = inventory[pos];
+  item_quantities[item.getName()] -= item.getQuantity();
+  slot_filled[pos] = false;
+  inventory[pos] = Item();
+  updateTextures(pos);
+  updateCraftableList();
+}
+
+// Generic add item to inventory
+// Will first see if there is already equivalent items with space,
+// Adds to them first. Otherwise,
+// Equivalent to InsertItem(int, Item)
+// Where int is the first open slot;
+void Inventory::addItem(Item item) {
+
+  for (auto i = inventory.begin(); i != inventory.end(); i++) {
+    if (i->getName() == item.getName()) {
+      int empty = i->getMaxStack() - i->getQuantity();
+      if (empty > 0) {
+        if (empty >= item.getQuantity()) {
+          i->addQuantity(item.getQuantity());
+          item.setQuantity(0);
+          updateCraftableList();
+          return;
+        }
+        i->addQuantity(empty);
+        item.addQuantity(-empty);
+      }
+    }
+  }
+
+  if (item.getQuantity() > 0) {
+    int pos = getFirstFreeSlot();
+    if (pos < 0) {
+      return;
+    }
+    insertItem(pos, item);
+  }
+}
+
+// Sets the current crafting flags - shows what objects we're close to
+void Inventory::setCraftingFlags(CraftingFlags flags) {
+  crafting_flags = flags;
+  updateCraftableList();
+}
+
+// Debug printing to console the craftable items given current item quantities
+void Inventory::printCrafting() {
+  auto vec = crafting.getCraftable(item_quantities, crafting_flags);
+  std::cout << "Craftable: \n";
+  for (auto it = vec.begin(); it != vec.end(); it++) {
+    std::cout << "Can craft " << it->output.getName() << std::endl;
+  }
+}
+
+// Debug printing to console the contents item_quantities
+void Inventory::printInventory() {
+  std::cout << "Inventory: \n";
+  for (auto it = item_quantities.begin(); it != item_quantities.end(); it++) {
+    std::cout << it->first << " x" << it->second << std::endl;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Draw functions
+////////////////////////////////////////////////////////////////////////////////
 
 // Draws the inventory
 void Inventory::draw(sf::RenderWindow &window) {
@@ -624,80 +858,9 @@ void Inventory::draw(sf::RenderWindow &window) {
       }
     }
   }
+  drawCrafting(window);
 }
 
-// Insert item at position
-void Inventory::insertItem(int pos, Item item) {
-  if (pos < 0 || pos > SLOTS) {
-    return;
-  }
-  item_quantities[item.getName()] += item.getQuantity();
-  slot_filled[pos] = true;
-  inventory[pos] = item;
-  updateTextures(pos);
-}
-
-// Remove item at position
-void Inventory::removeItem(int pos) {
-  if (pos < 0 || pos > SLOTS) {
-    return;
-  }
-  Item item = inventory[pos];
-  item_quantities[item.getName()] -= item.getQuantity();
-  slot_filled[pos] = false;
-  inventory[pos] = Item();
-  updateTextures(pos);
-}
-
-// Generic add item to inventory
-// Will first see if there is already equivalent items with space,
-// Adds to them first. Otherwise,
-// Equivalent to InsertItem(int, Item)
-// Where int is the first open slot;
-void Inventory::addItem(Item item) {
-
-  for (auto i = inventory.begin(); i != inventory.end(); i++) {
-    if (i->getName() == item.getName()) {
-      int empty = i->getMaxStack() - i->getQuantity();
-      if (empty > 0) {
-        if (empty >= item.getQuantity()) {
-          i->addQuantity(item.getQuantity());
-          item.setQuantity(0);
-          return;
-        }
-        i->addQuantity(empty);
-        item.addQuantity(-empty);
-      }
-    }
-  }
-
-  if (item.getQuantity() > 0) {
-    int pos = getFirstFreeSlot();
-    if (pos < 0) {
-      return;
-    }
-    insertItem(pos, item);
-  }
-}
-
-// Sets the current crafting flags - shows what objects we're close to
-void Inventory::setCraftingFlags(CraftingFlags flags) {
-  crafting_flags = flags;
-}
-
-// Debug printing to console the craftable items given current item quantities
-void Inventory::printCrafting() {
-  auto vec = crafting.getCraftable(item_quantities, crafting_flags);
-  std::cout << "Craftable: \n";
-  for (auto it = vec.begin(); it != vec.end(); it++) {
-    std::cout << "Can craft " << it->getName() << std::endl;
-  }
-}
-
-// Debug printing to console the contents item_quantities
-void Inventory::printInventory() {
-  std::cout << "Inventory: \n";
-  for (auto it = item_quantities.begin(); it != item_quantities.end(); it++) {
-    std::cout << it->first << " x" << it->second << std::endl;
-  }
+void Inventory::drawCrafting(sf::RenderWindow &window) {
+  window.draw(crafting_array);
 }

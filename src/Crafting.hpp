@@ -11,8 +11,13 @@
 
 class Crafting {
 private:
+  int maxIngredients;
+
+  int calclulateMaxIngredients();
+
 public:
-  std::vector<Item> getCraftable(ItemQuantities, CraftingFlags);
+  std::vector<Recipe> getCraftable(ItemQuantities, CraftingFlags);
+  int getMaxIngredients();
 
   Crafting();
   Crafting(Crafting &&) = default;
@@ -22,9 +27,11 @@ public:
   ~Crafting();
 };
 
-std::vector<Item> Crafting::getCraftable(ItemQuantities items,
-                                         CraftingFlags flags) {
-  std::vector<Item> ret;
+Crafting::Crafting() { maxIngredients = calclulateMaxIngredients(); }
+
+std::vector<Recipe> Crafting::getCraftable(ItemQuantities items,
+                                           CraftingFlags flags) {
+  std::vector<Recipe> ret;
   for (auto recipe = recipes.begin(); recipe != recipes.end(); recipe++) {
     bool canCraft = true;
     for (auto ingredient = recipe->ingredients.begin();
@@ -39,12 +46,22 @@ std::vector<Item> Crafting::getCraftable(ItemQuantities items,
       }
     }
     if (canCraft) {
-      ret.push_back(recipe->output);
+      ret.push_back(*recipe);
     }
   }
   return ret;
 }
 
-Crafting::Crafting() {}
+int Crafting::getMaxIngredients() { return maxIngredients; }
+
+int Crafting::calclulateMaxIngredients() {
+  int max = 0;
+  for (auto it = recipes.begin(); it != recipes.end(); it++) {
+    if (it->ingredients.size() > max)
+      max = it->ingredients.size();
+  }
+
+  return max;
+}
 
 Crafting::~Crafting() {}
