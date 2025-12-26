@@ -12,7 +12,8 @@
        ItemList[name].getMaxStack(), ItemList[name].getType(),                 \
        ItemList[name].getHpGained(), ItemList[name].getHungerGained(),         \
        ItemList[name].getWarmthGained(), ItemList[name].getDefenseGained(),    \
-       ItemList[name].getColdResist())
+       ItemList[name].getColdResist(), ItemList[name].getActionFunction(),     \
+       ItemList[name].getTooltipFunction())
 
 // Shorthands for filling in 0s for the stats
 #define NOT_CONSUMABLE 0, 0, 0
@@ -32,6 +33,8 @@ std::map<std::string, Item> ItemList{
     ////////////////////////////////////////////////////////////////////////////////
     ///    Tools
     ////////////////////////////////////////////////////////////////////////////////
+    {"axe", Item("axe", sf::Vector2f{0, 0}, 0, 10, 0, NOT_CONSUMABLE,
+                 NOT_EQUIPABLE, NULL, NULL)},
 
     ////////////////////////////////////////////////////////////////////////////////
     ///    Equipment
