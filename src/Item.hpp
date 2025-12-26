@@ -22,9 +22,12 @@ typedef uint8_t TypeFlags;
 #define NOT_USED_3 0b1000000
 #define NOT_USED_4 0b10000000
 
+class Item;
+
 // The two function types
-typedef void (*actionFunction)();         // Void return, no params
-typedef std::string (*tooltipFunction)(); // String return, no params
+typedef void (*actionFunction)(Item *); // Void return, param of itself
+typedef std::string (*tooltipFunction)(
+    Item *); // String return, param of itself
 
 class Item {
 private:
@@ -135,7 +138,7 @@ void Item::draw(sf::RenderWindow &window) {
 std::string Item::getTooltip() {
   std::stringstream ss;
   if (tooltipHover) {
-    ss << tooltipHover();
+    ss << tooltipHover(this);
     return ss.str();
   }
 
