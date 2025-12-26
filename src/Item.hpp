@@ -69,6 +69,8 @@ public:
   float getWarmthGained();
   float getDefenseGained();
   float getColdResist();
+  actionFunction getActionFunction();
+  tooltipFunction getTooltipFunction();
   void setQuantity(int);
   void addQuantity(int);
 
@@ -184,6 +186,12 @@ float Item::getDefenseGained() { return defense; }
 
 // Returns the amount of cold resist item gives
 float Item::getColdResist() { return cold_resist; }
+
+// Returns the pointer to the action function
+actionFunction Item::getActionFunction() { return useAction; }
+
+// Returns the pointer to the tooltip function
+tooltipFunction Item::getTooltipFunction() { return tooltipHover; }
 
 // Sets the quantity
 // No checks, it is unsafe if stack size is important
