@@ -53,14 +53,15 @@ std::map<std::string, Item> ItemList{
     ////////////////////////////////////////////////////////////////////////////////
     ///    Consumables
     ////////////////////////////////////////////////////////////////////////////////
-    {"Carrot", Item("Carrot", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE,
-                    CONSUMABLE, 1, 2, 0, NOT_EQUIPABLE, NULL, NULL)},
+    {"Carrot",
+     Item("Carrot", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE,
+          1, 2, 0, NOT_EQUIPABLE, consumable_action, NULL)},
     {"Cooked Meat",
      Item("Cooked Meat", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE,
-          CONSUMABLE, 4, 6, 2, NOT_EQUIPABLE, NULL, NULL)},
+          CONSUMABLE, 4, 6, 2, NOT_EQUIPABLE, consumable_action, NULL)},
     {"Snowman Soup",
      Item("Snowman Soup", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE,
-          CONSUMABLE, 4, 6, 4, NOT_EQUIPABLE, NULL, soup_tooltip)},
+          CONSUMABLE, 4, 6, 4, NOT_EQUIPABLE, consumable_action, soup_tooltip)},
 
     ////////////////////////////////////////////////////////////////////////////////
     ///    Misc/Testing
