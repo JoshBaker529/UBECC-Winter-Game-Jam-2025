@@ -5,13 +5,20 @@
 #include "Tilemap.hpp"
 #include "DeltaTime.hpp"
 
+#include <list>
+using std::list;
+
 class Tilemap; // Yes compiler, there IS a class called Tilemap.
 
 class Entity{
+private:
+	static inline list<sf::Sprite> sprites;
+	
 protected:
 
     sf::Vector2f position, movement;
     sf::FloatRect boundingBox;
+	bool dead = true;
 
 public:
 
@@ -89,7 +96,41 @@ public:
         return (boundingBox.findIntersection(other.getBoundingBox()) != std::nullopt);
     }
 	
-	virtual void step(sf::RenderWindow&, sf::View&, Tilemap&){}
+	virtual void step(sf::RenderWindow&, sf::View&, sf::Texture&, Tilemap&){}
+	virtual void draw(sf::RenderWindow&, sf::Texture&){}
+	
+	template<class T>
+	static void stepAll(list<T> &all, sf::RenderWindow &window, sf::View &view, sf::Texture &texture, Tilemap &tilemap){
+		for(auto i = all.begin(); i != all.end(); i++){
+			i->step(window,view,texture,tilemap);			
+		}
+	}
+	
+	static void submitSprite(sf::Sprite sprite){
+		for(auto i = sprites.begin(); i != sprites.end(); i++){
+			
+			float newDepth = sprite.getGlobalBounds().position.y;
+			newDepth += sprite.getGlobalBounds().size.y;
+			
+			float oldDepth = i->getGlobalBounds().position.y;
+			oldDepth += i->getGlobalBounds().size.y;
+			
+			if(newDepth < oldDepth){
+				sprites.insert(i,sprite);
+				return;
+			}
+			
+		}
+		
+		sprites.push_back(sprite);
+	}
+	
+	static void drawAll(sf::RenderWindow &window){
+		for(auto i = sprites.begin(); i != sprites.end(); i++){
+			window.draw(*i);
+		}
+		sprites.clear();
+	}
 };
 
 #endif

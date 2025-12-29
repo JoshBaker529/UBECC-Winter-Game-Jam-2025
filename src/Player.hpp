@@ -6,17 +6,20 @@
 #include "Entity.hpp"
 #include "Tilemap.hpp"
 
+#include<list>
+using std::list;
+
 class Entity;
 class Tilemap;
 
 class Player: public Entity{
 public:
 
-	Player(): Entity(sf::Vector2f(0,0), sf::Vector2f(31,31)) {}
+	Player(): Entity(sf::Vector2f(0,0), sf::Vector2f(24,24)) {}
 
-	virtual void step(sf::RenderWindow &window, sf::View &view, Tilemap &tilemap){
+	virtual void step(sf::RenderWindow &window, sf::View &view, sf::Texture &texture, Tilemap &tilemap){
 		const float dt = DeltaTime::get();
-		const float momentum = 0.5f*dt, friction = 0.25f*dt, terminal = 6.f;
+		const float momentum = 0.5f*dt, friction = 0.25f*dt, terminal = 4.f;
 		
 		// Input
 		sf::Vector2f input;
@@ -34,13 +37,16 @@ public:
 		view.move( (position-view.getCenter())/1.f );
 		window.setView(view);
 		
-		// Draw
-		sf::RectangleShape rect;
-		rect.setPosition( getBoundingBox().position );
-		rect.setSize( getBoundingBox().size );
-		rect.setFillColor( sf::Color::Red );
-		window.draw(rect);
+		// Draw Code
+		sf::Sprite sprite(texture);
+		sprite.setPosition( getBoundingBox().position + (getBoundingBox().size/2.f) );
+		sprite.setOrigin( sf::Vector2f(16.f,48.f) );
+		sprite.setTextureRect( sf::IntRect( {0,0}, {32,64}) );
+		Entity::submitSprite(sprite);
+		
 	}
+	
+	static inline list<Player> all;
 };
 
 #endif
