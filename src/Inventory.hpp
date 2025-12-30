@@ -30,14 +30,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // Number of slots
-#define SLOTS 10
 #define COLUMNS 5
-#define ROWS 2
+#define ROWS 3 // One for hotbar
+#define SLOTS COLUMNS *ROWS
+#define HOTBAR_SLOTS 5
 
 // Size
 #define SLOT_SIZE 75.f
+#define HOTBAR_BUFFER 10.f
 #define WIDTH (COLUMNS * SLOT_SIZE)
 #define HEIGHT (ROWS * SLOT_SIZE)
+#define TOTAL_HEIGHT (HEIGHT + HOTBAR_BUFFER)
 
 // .. exactly what it says
 #define VERTICES_PER_SQUARE 6
@@ -103,11 +106,13 @@ class Inventory {
 private:
   sf::Vector2f start;
   sf::VertexArray array;
+  sf::VertexArray hotbar;
   sf::VertexArray floating_icon;
   sf::VertexArray crafting_array;
 
   std::array<Item, SLOTS> inventory;
   std::array<bool, SLOTS> slot_filled;
+
   std::array<int, 8> flag_counts;
 
   sf::Texture item_texture;
@@ -301,6 +306,25 @@ void Inventory::updateTextures(int index) {
     array[vector_index + 3].color = sf::Color(0xFFFFFFFF);
     array[vector_index + 4].color = sf::Color(0xFFFFFFFF);
     array[vector_index + 5].color = sf::Color(0xFFFFFFFF);
+
+    if (index < HOTBAR_SLOTS) {
+      vector_index = (HOTBAR_SLOTS + 1) * VERTICES_PER_SQUARE +
+                     index * VERTICES_PER_SQUARE;
+
+      hotbar[vector_index + 0].texCoords = UpLeft;
+      hotbar[vector_index + 1].texCoords = UpRight;
+      hotbar[vector_index + 2].texCoords = DownRight;
+      hotbar[vector_index + 3].texCoords = DownRight;
+      hotbar[vector_index + 4].texCoords = DownLeft;
+      hotbar[vector_index + 5].texCoords = UpLeft;
+      hotbar[vector_index + 0].color = sf::Color(0xFFFFFFFF);
+      hotbar[vector_index + 1].color = sf::Color(0xFFFFFFFF);
+      hotbar[vector_index + 2].color = sf::Color(0xFFFFFFFF);
+      hotbar[vector_index + 3].color = sf::Color(0xFFFFFFFF);
+      hotbar[vector_index + 4].color = sf::Color(0xFFFFFFFF);
+      hotbar[vector_index + 5].color = sf::Color(0xFFFFFFFF);
+    }
+
     return;
   } else {
     if (index == FLOATING_INDEX) {
@@ -318,6 +342,17 @@ void Inventory::updateTextures(int index) {
     array[vector_index + 3].color = sf::Color(TRANSPARENT);
     array[vector_index + 4].color = sf::Color(TRANSPARENT);
     array[vector_index + 5].color = sf::Color(TRANSPARENT);
+    if (index < HOTBAR_SLOTS) {
+      vector_index = (HOTBAR_SLOTS + 1) * VERTICES_PER_SQUARE +
+                     index * VERTICES_PER_SQUARE;
+
+      hotbar[vector_index + 0].color = sf::Color(TRANSPARENT);
+      hotbar[vector_index + 1].color = sf::Color(TRANSPARENT);
+      hotbar[vector_index + 2].color = sf::Color(TRANSPARENT);
+      hotbar[vector_index + 3].color = sf::Color(TRANSPARENT);
+      hotbar[vector_index + 4].color = sf::Color(TRANSPARENT);
+      hotbar[vector_index + 5].color = sf::Color(TRANSPARENT);
+    }
   }
 }
 
@@ -465,8 +500,8 @@ Inventory::Inventory(sf::Vector2f vec) {
       sf::VertexArray(sf::PrimitiveType::Triangles, VERTICES_PER_SQUARE);
 
   sf::Vector2f UpLeft(start.x, start.y), UpRight(start.x + WIDTH, start.y),
-      DownLeft(start.x, start.y + HEIGHT),
-      DownRight(start.x + WIDTH, start.y + HEIGHT);
+      DownLeft(start.x, start.y + TOTAL_HEIGHT),
+      DownRight(start.x + WIDTH, start.y + TOTAL_HEIGHT);
 
   array[0].position = UpLeft;
   array[1].position = UpRight;
@@ -496,6 +531,9 @@ Inventory::Inventory(sf::Vector2f vec) {
     if (slot % COLUMNS == 0 && slot != 0) {
       x = start.x;
       y = y + slot_height;
+      if (slot == COLUMNS) {
+        y += HOTBAR_BUFFER;
+      }
     }
 
     int index = slot * 6 + 6;
@@ -529,6 +567,9 @@ Inventory::Inventory(sf::Vector2f vec) {
     if (slot % COLUMNS == 0 && slot != 0) {
       x = start.x;
       y = y + slot_height;
+      if (slot == COLUMNS) {
+        y += HOTBAR_BUFFER;
+      }
     }
 
     sf::Vector2f UpLeft(x + border_width, y + border_height),
@@ -610,15 +651,12 @@ Inventory::Inventory(sf::Vector2f vec) {
         start_x + CRAFTING_ICON_WIDTH,
         start_y + ((CRAFTING_ICON_HEIGHT - CRAFTING_INGREDIENT_HEIGHT) / 2) +
             border_height);
-    std::cout << "Start y " << start_y << " UpLeft.y " << UpLeft.y;
-    std::cout << "\nEnd y " << start_y + CRAFTING_ICON_HEIGHT;
     UpRight =
         UpLeft + sf::Vector2f{CRAFTING_INGREDIENT_WIDTH - border_width, 0};
     DownLeft =
         UpLeft + sf::Vector2f{0, CRAFTING_INGREDIENT_HEIGHT - border_height};
     DownRight =
         DownLeft + sf::Vector2f{CRAFTING_INGREDIENT_WIDTH - border_width, 0};
-    std::cout << " DownLeft.y " << DownLeft.y << std::endl;
 
     for (int ingredient = 0; ingredient < crafting.getMaxIngredients();
          ingredient++) {
@@ -645,6 +683,81 @@ Inventory::Inventory(sf::Vector2f vec) {
     }
 
     start_y += CRAFTING_ICON_HEIGHT;
+  }
+  hotbar = sf::VertexArray(sf::PrimitiveType::Triangles,
+                           ((HOTBAR_SLOTS * 2) + 1) * VERTICES_PER_SQUARE);
+
+  UpLeft = sf::Vector2f{start.x, start.y};
+  UpRight = sf::Vector2f{start.x + WIDTH, start.y};
+  DownLeft = sf::Vector2f{start.x, start.y + SLOT_SIZE};
+  DownRight = sf::Vector2f{start.x + WIDTH, start.y + SLOT_SIZE};
+
+  hotbar[0].position = UpLeft;
+  hotbar[1].position = UpRight;
+  hotbar[2].position = DownRight;
+  hotbar[3].position = DownRight;
+  hotbar[4].position = DownLeft;
+  hotbar[5].position = UpLeft;
+
+  slot_width = WIDTH / COLUMNS;
+  slot_height = HEIGHT / ROWS;
+
+  border_width = slot_width * .05;
+  border_height = slot_height * .05;
+  x = start.x;
+  y = start.y;
+
+  // BAckground
+  for (int slot = 0; slot < HOTBAR_SLOTS; slot++) {
+    int index = (slot + 1) * VERTICES_PER_SQUARE;
+
+    sf::Vector2f UpLeft(x + border_width, y + border_height),
+        UpRight(x + slot_width - border_width, y + border_height),
+        DownLeft(x + border_width, y + slot_height - border_height),
+        DownRight(x + slot_width - border_width,
+                  y + slot_width - border_height);
+
+    hotbar[index + 0].position = UpLeft;
+    hotbar[index + 1].position = UpRight;
+    hotbar[index + 2].position = DownRight;
+    hotbar[index + 3].position = DownRight;
+    hotbar[index + 4].position = DownLeft;
+    hotbar[index + 5].position = UpLeft;
+    hotbar[index + 0].color = sf::Color(SLOT_COLOR);
+    hotbar[index + 1].color = sf::Color(SLOT_COLOR);
+    hotbar[index + 2].color = sf::Color(SLOT_COLOR);
+    hotbar[index + 3].color = sf::Color(SLOT_COLOR);
+    hotbar[index + 4].color = sf::Color(SLOT_COLOR);
+    hotbar[index + 5].color = sf::Color(SLOT_COLOR);
+    x += SLOT_SIZE;
+  }
+
+  x = start.x;
+  y = start.y;
+  // Item
+  for (int slot = 0; slot < HOTBAR_SLOTS; slot++) {
+    int index =
+        (HOTBAR_SLOTS + 1) * VERTICES_PER_SQUARE + slot * VERTICES_PER_SQUARE;
+
+    sf::Vector2f UpLeft(x + border_width, y + border_height),
+        UpRight(x + slot_width - border_width, y + border_height),
+        DownLeft(x + border_width, y + slot_height - border_height),
+        DownRight(x + slot_width - border_width,
+                  y + slot_width - border_height);
+
+    hotbar[index + 0].position = UpLeft;
+    hotbar[index + 1].position = UpRight;
+    hotbar[index + 2].position = DownRight;
+    hotbar[index + 3].position = DownRight;
+    hotbar[index + 4].position = DownLeft;
+    hotbar[index + 5].position = UpLeft;
+    hotbar[index + 0].color = sf::Color(TRANSPARENT);
+    hotbar[index + 1].color = sf::Color(TRANSPARENT);
+    hotbar[index + 2].color = sf::Color(TRANSPARENT);
+    hotbar[index + 3].color = sf::Color(TRANSPARENT);
+    hotbar[index + 4].color = sf::Color(TRANSPARENT);
+    hotbar[index + 5].color = sf::Color(TRANSPARENT);
+    x += SLOT_SIZE;
   }
 }
 
@@ -728,6 +841,7 @@ void Inventory::addItem(Item item) {
       int empty = i->getMaxStack() - i->getQuantity();
       if (empty > 0) {
         if (empty >= item.getQuantity()) {
+          item_quantities[item.getName()] += item.getQuantity();
           i->addQuantity(item.getQuantity());
           item.setQuantity(0);
           updateCraftableList();
@@ -735,6 +849,7 @@ void Inventory::addItem(Item item) {
         }
         i->addQuantity(empty);
         item.addQuantity(-empty);
+        item_quantities[item.getName()] += empty;
       }
     }
   }
@@ -816,7 +931,37 @@ void Inventory::printInventory() {
 // Draws the inventory
 void Inventory::draw(sf::RenderWindow &window) {
   sf::Vector2i mousePos = Controls::mousePosition();
+
+  // Hotbar
+
   if (!open) {
+    window.draw(hotbar, &item_texture);
+
+    for (int slot = 0; slot < HOTBAR_SLOTS; slot++) {
+      if (inventory[slot].getQuantity() <= 1)
+        continue;
+      sf::Vector2f position =
+          array[VertexArrayIndexFromSlot(slot) + 2].position;
+
+      sf::Text text(font, std::to_string(inventory[slot].getQuantity()));
+      unsigned int size = text.getCharacterSize() + 2;
+      position.y -= size;
+      // Compensate for either 1 or 2 digits
+      if (inventory[slot].getQuantity() / 10 > 0) {
+        size += TWO_DIGITS;
+      } else {
+        size += ONE_DIGIT;
+      }
+      position.x -= size;
+
+      text.setPosition(position);
+      text.setFillColor(sf::Color(TEXT_FILL));
+      text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
+      text.setOutlineThickness(TEXT_OUTLINE_SIZE);
+      text.setStyle(sf::Text::Style::Bold);
+
+      window.draw(text, &item_texture);
+    }
     return;
   }
   drawCrafting(window);
@@ -934,6 +1079,7 @@ void Inventory::draw(sf::RenderWindow &window) {
     window.draw(text, &item_texture);
   }
 
+  // Floating item, Must be last!
   if (moving) {
     float x_offset = (WIDTH / COLUMNS / 2);
     float y_offset = (HEIGHT / ROWS / 2);
