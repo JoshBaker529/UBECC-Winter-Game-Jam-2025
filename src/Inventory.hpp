@@ -29,22 +29,15 @@
 // Defines, because magic numbers are bad :D
 ////////////////////////////////////////////////////////////////////////////////
 
-// Size
-#define SLOT_SIZE 25.f
-#define WIDTH 375.f
-#define HEIGHT 150.f
-
 // Number of slots
 #define SLOTS 10
 #define COLUMNS 5
 #define ROWS 2
 
-/*
 // Size
-#define SLOT_SIZE 25.f
+#define SLOT_SIZE 75.f
 #define WIDTH (COLUMNS * SLOT_SIZE)
 #define HEIGHT (ROWS * SLOT_SIZE)
-*/
 
 // .. exactly what it says
 #define VERTICES_PER_SQUARE 6
@@ -86,7 +79,7 @@
 #define CRAFTING_TEXT_WIDTH (CRAFTING_SECTION_WIDTH - CRAFTING_ICON_WIDTH)
 #define CRAFTING_TEXT_HEIGHT CRAFTING_ICON_HEIGHT
 #define CRAFTING_RECIPES_SHOWN 10
-#define CRAFTING_START (sf::Vector2f{0, start.y + HEIGHT})
+#define CRAFTING_START (sf::Vector2f{start.x, start.y + HEIGHT + 25.f})
 
 // Crafting flag array positions
 #define CRAFTING_FLAG_BENCH_INDEX 0
@@ -423,9 +416,10 @@ void Inventory::updateCraftableList() {
 }
 
 int Inventory::getCraftingFromPosition(sf::Vector2i pos) {
-  if (pos.x < 0 || pos.x > CRAFTING_ICON_WIDTH)
+  if (pos.x < CRAFTING_START.x ||
+      pos.x > CRAFTING_START.x + CRAFTING_ICON_WIDTH)
     return -1;
-  if (pos.y < start.y + HEIGHT)
+  if (pos.y < CRAFTING_START.y)
     return -1;
   for (int i = 0; i < CRAFTING_RECIPES_SHOWN; i++) {
     int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
@@ -821,6 +815,7 @@ void Inventory::draw(sf::RenderWindow &window) {
   if (!open) {
     return;
   }
+  drawCrafting(window);
   if (Controls::tapped(sf::Mouse::Button::Right)) {
     if (!moving) {
       int index = getVertexFromPosition(mousePos);
@@ -1002,8 +997,6 @@ void Inventory::draw(sf::RenderWindow &window) {
       window.draw(text);
     }
   }
-
-  drawCrafting(window);
 }
 
 void Inventory::drawCrafting(sf::RenderWindow &window) {
