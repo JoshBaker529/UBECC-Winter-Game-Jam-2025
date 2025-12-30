@@ -72,14 +72,13 @@
 #define FLOATING_INDEX (INT32_MAX)
 
 // Crafting constants
-#define CRAFTING_ICON_WIDTH 50.f
-#define CRAFTING_ICON_HEIGHT 50.f
-#define CRAFTING_INGREDIENT_WIDTH 25.f
-#define CRAFTING_INGREDIENT_HEIGHT 25.f
-#define CRAFTING_TEXT_WIDTH (CRAFTING_SECTION_WIDTH - CRAFTING_ICON_WIDTH)
-#define CRAFTING_TEXT_HEIGHT CRAFTING_ICON_HEIGHT
+#define CRAFTING_ICON_WIDTH 70.f
+#define CRAFTING_ICON_HEIGHT 70.f
+#define CRAFTING_INGREDIENT_WIDTH 50.f
+#define CRAFTING_INGREDIENT_HEIGHT 50.f
 #define CRAFTING_RECIPES_SHOWN 10
 #define CRAFTING_START (sf::Vector2f{start.x, start.y + HEIGHT + 25.f})
+#define CRAFTING_INDEX(i) (i * (crafting.getMaxIngredients() + 1) * 6)
 
 // Crafting flag array positions
 #define CRAFTING_FLAG_BENCH_INDEX 0
@@ -607,14 +606,19 @@ Inventory::Inventory(sf::Vector2f vec) {
     border_width = CRAFTING_INGREDIENT_WIDTH * .05;
     border_height = CRAFTING_INGREDIENT_HEIGHT * .05;
 
-    UpLeft = sf::Vector2f(start_x + CRAFTING_ICON_WIDTH,
-                          start_y + (CRAFTING_INGREDIENT_HEIGHT / 2));
+    UpLeft = sf::Vector2f(
+        start_x + CRAFTING_ICON_WIDTH,
+        start_y + ((CRAFTING_ICON_HEIGHT - CRAFTING_INGREDIENT_HEIGHT) / 2) +
+            border_height);
+    std::cout << "Start y " << start_y << " UpLeft.y " << UpLeft.y;
+    std::cout << "\nEnd y " << start_y + CRAFTING_ICON_HEIGHT;
     UpRight =
         UpLeft + sf::Vector2f{CRAFTING_INGREDIENT_WIDTH - border_width, 0};
     DownLeft =
         UpLeft + sf::Vector2f{0, CRAFTING_INGREDIENT_HEIGHT - border_height};
     DownRight =
         DownLeft + sf::Vector2f{CRAFTING_INGREDIENT_WIDTH - border_width, 0};
+    std::cout << " DownLeft.y " << DownLeft.y << std::endl;
 
     for (int ingredient = 0; ingredient < crafting.getMaxIngredients();
          ingredient++) {
@@ -1001,4 +1005,67 @@ void Inventory::draw(sf::RenderWindow &window) {
 
 void Inventory::drawCrafting(sf::RenderWindow &window) {
   window.draw(crafting_array, &item_texture);
+  float main_scale = (CRAFTING_ICON_WIDTH / SLOT_SIZE);
+  float ingr_scale = (CRAFTING_INGREDIENT_WIDTH / SLOT_SIZE);
+  for (int i = 0; i < CRAFTING_RECIPES_SHOWN && i < craftable_list.size();
+       i++) {
+    int index = CRAFTING_INDEX(i) + 2;
+    if (craftable_list[i].output.getQuantity() > 1) {
+      sf::Vector2f position = crafting_array[index].position;
+      sf::Text text(font,
+                    std::to_string(craftable_list[i].output.getQuantity()));
+
+      // text.scale(sf::Vector2f{main_scale, main_scale});
+      unsigned int size = 30 * main_scale;
+      text.setCharacterSize(size);
+
+      position.y -= size;
+      // Compensate for either 1 or 2 digits
+      if (craftable_list[i].output.getQuantity() / 10 > 0) {
+        size += TWO_DIGITS;
+      } else {
+        size += ONE_DIGIT;
+      }
+      position.x -= size;
+
+      text.setPosition(position);
+      text.setFillColor(sf::Color(TEXT_FILL));
+      text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
+      text.setOutlineThickness(TEXT_OUTLINE_SIZE);
+      text.setStyle(sf::Text::Style::Bold);
+      window.draw(text);
+    }
+    for (int j = 0; j < crafting.getMaxIngredients() &&
+                    j < craftable_list[i].ingredients.size();
+         j++) {
+
+      index += 6;
+      int qty = craftable_list[i].ingredients[j].second;
+
+      if (qty > 1) {
+        sf::Vector2f position = crafting_array[index].position;
+        sf::Text text(font, std::to_string(qty));
+
+        // text.scale(sf::Vector2f{main_scale, main_scale});
+        unsigned int size = 30 * ingr_scale;
+        text.setCharacterSize(size);
+
+        position.y -= size;
+        // Compensate for either 1 or 2 digits
+        if (qty / 10 > 0) {
+          size += TWO_DIGITS;
+        } else {
+          size += ONE_DIGIT;
+        }
+        position.x -= size;
+
+        text.setPosition(position);
+        text.setFillColor(sf::Color(TEXT_FILL));
+        text.setOutlineColor(sf::Color(TEXT_OUTLINE_COLOR));
+        text.setOutlineThickness(TEXT_OUTLINE_SIZE);
+        text.setStyle(sf::Text::Style::Bold);
+        window.draw(text);
+      }
+    }
+  }
 }
