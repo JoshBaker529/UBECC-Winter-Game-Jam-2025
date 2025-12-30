@@ -10,11 +10,13 @@
 #include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
+#include "SFML/Graphics/Texture.hpp"
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Window/Mouse.hpp"
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <array>
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -28,14 +30,21 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // Size
-// For best results, make sure these are multiples of COLUMNS and ROWS
-#define WIDTH 350.f
+#define SLOT_SIZE 25.f
+#define WIDTH 375.f
 #define HEIGHT 150.f
 
 // Number of slots
-#define SLOTS 21
-#define COLUMNS 7
-#define ROWS 3
+#define SLOTS 10
+#define COLUMNS 5
+#define ROWS 2
+
+/*
+// Size
+#define SLOT_SIZE 25.f
+#define WIDTH (COLUMNS * SLOT_SIZE)
+#define HEIGHT (ROWS * SLOT_SIZE)
+*/
 
 // .. exactly what it says
 #define VERTICES_PER_SQUARE 6
@@ -52,8 +61,8 @@
 #define TEXT_OUTLINE_SIZE 0.5f
 
 // Textures!
-#define TEXTURE_WIDTH 100.f
-#define TEXTURE_HEIGHT 100.f
+#define TEXTURE_WIDTH 32.f
+#define TEXTURE_HEIGHT 32.f
 
 // Text offsets
 #define ONE_DIGIT -10
@@ -67,7 +76,7 @@
 
 // The index of the floating item
 // WARN: Not actually a valid array index!!
-#define FLOATING_INDEX (VertexArrayIndexFromSlot(SLOTS - 1) + 6)
+#define FLOATING_INDEX (INT32_MAX)
 
 // Crafting constants
 #define CRAFTING_ICON_WIDTH 50.f
@@ -108,6 +117,8 @@ private:
   std::array<Item, SLOTS> inventory;
   std::array<bool, SLOTS> slot_filled;
   std::array<int, 8> flag_counts;
+
+  sf::Texture item_texture;
 
   bool open;
   bool moving;
@@ -260,30 +271,19 @@ void Inventory::updateTextures(int index) {
                    DownRight(texStart.x + TEXTURE_WIDTH,
                              texStart.y + TEXTURE_HEIGHT);
 
-      /*
-      floating_icon[vector_index + 0].texCoords = UpLeft;
-      floating_icon[vector_index + 1].texCoords = UpRight;
-      floating_icon[vector_index + 2].texCoords = DownRight;
-      floating_icon[vector_index + 3].texCoords = DownRight;
-      floating_icon[vector_index + 4].texCoords = DownLeft;
-      floating_icon[vector_index + 5].texCoords = UpLeft;
-      */
-      /*
-      floating_icon[vector_index + 0].color = sf::Color(SLOT_COLOR +
-      0xE0101000); floating_icon[vector_index + 1].color = sf::Color(SLOT_COLOR
-      + 0xE0101000); floating_icon[vector_index + 2].color =
-      sf::Color(SLOT_COLOR + 0xE0101000); floating_icon[vector_index + 3].color
-      = sf::Color(SLOT_COLOR + 0xE0101000); floating_icon[vector_index +
-      4].color = sf::Color(SLOT_COLOR + 0xE0101000); floating_icon[vector_index
-      + 5].color = sf::Color(SLOT_COLOR + 0xE0101000);
-      */
+      floating_icon[0].texCoords = UpLeft;
+      floating_icon[1].texCoords = UpRight;
+      floating_icon[2].texCoords = DownRight;
+      floating_icon[3].texCoords = DownRight;
+      floating_icon[4].texCoords = DownLeft;
+      floating_icon[5].texCoords = UpLeft;
 
-      floating_icon[0].color = sf::Color(floating_item.temp_color);
-      floating_icon[1].color = sf::Color(floating_item.temp_color);
-      floating_icon[2].color = sf::Color(floating_item.temp_color);
-      floating_icon[3].color = sf::Color(floating_item.temp_color);
-      floating_icon[4].color = sf::Color(floating_item.temp_color);
-      floating_icon[5].color = sf::Color(floating_item.temp_color);
+      floating_icon[0].color = sf::Color(0xFFFFFFFF);
+      floating_icon[1].color = sf::Color(0xFFFFFFFF);
+      floating_icon[2].color = sf::Color(0xFFFFFFFF);
+      floating_icon[3].color = sf::Color(0xFFFFFFFF);
+      floating_icon[4].color = sf::Color(0xFFFFFFFF);
+      floating_icon[5].color = sf::Color(0xFFFFFFFF);
 
       return;
     }
@@ -296,29 +296,20 @@ void Inventory::updateTextures(int index) {
                  DownRight(texStart.x + TEXTURE_WIDTH,
                            texStart.y + TEXTURE_HEIGHT);
 
-    /*
     array[vector_index + 0].texCoords = UpLeft;
     array[vector_index + 1].texCoords = UpRight;
     array[vector_index + 2].texCoords = DownRight;
     array[vector_index + 3].texCoords = DownRight;
     array[vector_index + 4].texCoords = DownLeft;
     array[vector_index + 5].texCoords = UpLeft;
-    */
-    /*
-    array[vector_index + 0].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[vector_index + 1].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[vector_index + 2].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[vector_index + 3].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[vector_index + 4].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    array[vector_index + 5].color = sf::Color(SLOT_COLOR + 0xE0101000);
-    */
 
-    array[vector_index + 0].color = sf::Color(item.temp_color);
-    array[vector_index + 1].color = sf::Color(item.temp_color);
-    array[vector_index + 2].color = sf::Color(item.temp_color);
-    array[vector_index + 3].color = sf::Color(item.temp_color);
-    array[vector_index + 4].color = sf::Color(item.temp_color);
-    array[vector_index + 5].color = sf::Color(item.temp_color);
+    array[vector_index + 0].color = sf::Color(0xFFFFFFFF);
+    array[vector_index + 1].color = sf::Color(0xFFFFFFFF);
+    array[vector_index + 2].color = sf::Color(0xFFFFFFFF);
+    array[vector_index + 3].color = sf::Color(0xFFFFFFFF);
+    array[vector_index + 4].color = sf::Color(0xFFFFFFFF);
+    array[vector_index + 5].color = sf::Color(0xFFFFFFFF);
+    return;
   } else {
     if (index == FLOATING_INDEX) {
       floating_icon[vector_index + 0].color = sf::Color(TRANSPARENT);
@@ -349,13 +340,28 @@ void Inventory::updateCraftableList() {
   craftable_list = crafting.getCraftable(item_quantities, crafting_flags);
   int i;
   for (i = 0; i < craftable_list.size(); i++) {
+
+    sf::Vector2f texStart = craftable_list[i].output.getTexturePosition();
+    sf::Vector2f UpLeft = texStart,
+                 UpRight(texStart.x + TEXTURE_WIDTH, texStart.y),
+                 DownLeft(texStart.x, texStart.y + TEXTURE_HEIGHT),
+                 DownRight(texStart.x + TEXTURE_WIDTH,
+                           texStart.y + TEXTURE_HEIGHT);
+
     int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
-    crafting_array[index + 0].color = sf::Color(SLOT_COLOR);
-    crafting_array[index + 1].color = sf::Color(SLOT_COLOR);
-    crafting_array[index + 2].color = sf::Color(SLOT_COLOR);
-    crafting_array[index + 3].color = sf::Color(SLOT_COLOR);
-    crafting_array[index + 4].color = sf::Color(SLOT_COLOR);
-    crafting_array[index + 5].color = sf::Color(SLOT_COLOR);
+    crafting_array[index + 0].color = sf::Color(0xFFFFFFFF);
+    crafting_array[index + 1].color = sf::Color(0xFFFFFFFF);
+    crafting_array[index + 2].color = sf::Color(0xFFFFFFFF);
+    crafting_array[index + 3].color = sf::Color(0xFFFFFFFF);
+    crafting_array[index + 4].color = sf::Color(0xFFFFFFFF);
+    crafting_array[index + 5].color = sf::Color(0xFFFFFFFF);
+
+    crafting_array[index + 0].texCoords = UpLeft;
+    crafting_array[index + 1].texCoords = UpRight;
+    crafting_array[index + 2].texCoords = DownRight;
+    crafting_array[index + 3].texCoords = DownRight;
+    crafting_array[index + 4].texCoords = DownLeft;
+    crafting_array[index + 5].texCoords = UpLeft;
 
     for (int ingredient = 0; ingredient < crafting.getMaxIngredients();
          ingredient++) {
@@ -369,12 +375,25 @@ void Inventory::updateCraftableList() {
         crafting_array[index + 5].color = sf::Color(TRANSPARENT);
 
       } else {
+
+        texStart = ItemList[craftable_list[i].ingredients[ingredient].first]
+                       .getTexturePosition();
+        UpLeft = texStart;
+        UpRight = texStart + sf::Vector2f{TEXTURE_WIDTH, 0};
+        DownLeft = texStart + sf::Vector2f{0, TEXTURE_HEIGHT};
+        DownRight = texStart + sf::Vector2f{TEXTURE_WIDTH, TEXTURE_HEIGHT};
         crafting_array[index + 0].color = sf::Color(SLOT_COLOR);
         crafting_array[index + 1].color = sf::Color(SLOT_COLOR);
         crafting_array[index + 2].color = sf::Color(SLOT_COLOR);
         crafting_array[index + 3].color = sf::Color(SLOT_COLOR);
         crafting_array[index + 4].color = sf::Color(SLOT_COLOR);
         crafting_array[index + 5].color = sf::Color(SLOT_COLOR);
+        crafting_array[index + 0].texCoords = UpLeft;
+        crafting_array[index + 1].texCoords = UpRight;
+        crafting_array[index + 2].texCoords = DownRight;
+        crafting_array[index + 3].texCoords = DownRight;
+        crafting_array[index + 4].texCoords = DownLeft;
+        crafting_array[index + 5].texCoords = UpLeft;
       }
     }
   }
@@ -426,6 +445,11 @@ Inventory::Inventory(sf::Vector2f vec) {
   // Don't ask why I have this as a param, and not a define like everything else
   start = vec;
 
+  bool t = item_texture.loadFromFile("res/items.png");
+  if (!t) {
+    std::cerr << "Items image did not load" << std::endl;
+  }
+
   for (int i = 0; i < SLOTS; i++) {
     slot_filled[i] = false;
   }
@@ -475,7 +499,7 @@ Inventory::Inventory(sf::Vector2f vec) {
   float border_height = slot_height * .05;
 
   // Base Layer
-  for (int slot = 0; slot < 21; slot++) {
+  for (int slot = 0; slot < SLOTS; slot++) {
     if (slot % COLUMNS == 0 && slot != 0) {
       x = start.x;
       y = y + slot_height;
@@ -508,56 +532,33 @@ Inventory::Inventory(sf::Vector2f vec) {
   x = start.x;
   y = start.y;
   // Item Layer
-  for (int slot = 0; slot < 21; slot++) {
+  for (int slot = 0; slot < SLOTS; slot++) {
     if (slot % COLUMNS == 0 && slot != 0) {
       x = start.x;
       y = y + slot_height;
     }
 
-    int index_start = (SLOTS + 1) * 6;
-    int index = slot * 6 + index_start;
     sf::Vector2f UpLeft(x + border_width, y + border_height),
         UpRight(x + slot_width - border_width, y + border_height),
         DownLeft(x + border_width, y + slot_height - border_height),
         DownRight(x + slot_width - border_width,
                   y + slot_width - border_height);
 
+    int index_start = (SLOTS + 1) * 6;
+    int index = slot * 6 + index_start;
     array[index + 0].position = UpLeft;
     array[index + 1].position = UpRight;
     array[index + 2].position = DownRight;
     array[index + 3].position = DownRight;
     array[index + 4].position = DownLeft;
     array[index + 5].position = UpLeft;
-
-    /*
-    if (slot_filled[slot]) {
-      sf::Vector2f item_texture = inventory[slot].getTexturePosition();
-      sf::Vector2f TextureUpLeft(item_texture),
-          TextureUpRight(item_texture.x + TEXTURE_WIDTH, item_texture.y),
-          TextureDownLeft(item_texture.x, item_texture.y + TEXTURE_HEIGHT),
-          TextureDownRight(item_texture.x + TEXTURE_WIDTH,
-                           item_texture.y + TEXTURE_HEIGHT);
-
-      array[index + 0].texCoords = TextureUpLeft;
-      array[index + 1].texCoords = TextureUpRight;
-      array[index + 2].texCoords = TextureDownRight;
-      array[index + 3].texCoords = TextureDownRight;
-      array[index + 4].texCoords = TextureDownLeft;
-      array[index + 5].texCoords = TextureUpLeft;
-      array[index + 0].color = sf::Color(SLOT_COLOR + 0x30101000);
-      array[index + 1].color = sf::Color(SLOT_COLOR + 0x30101000);
-      array[index + 2].color = sf::Color(SLOT_COLOR + 0x30101000);
-      array[index + 3].color = sf::Color(SLOT_COLOR + 0x30101000);
-      array[index + 4].color = sf::Color(SLOT_COLOR + 0x30101000);
-      array[index + 5].color = sf::Color(SLOT_COLOR + 0x30101000);
-    } else {
-    */
     array[index + 0].color = sf::Color(TRANSPARENT);
     array[index + 1].color = sf::Color(TRANSPARENT);
     array[index + 2].color = sf::Color(TRANSPARENT);
     array[index + 3].color = sf::Color(TRANSPARENT);
     array[index + 4].color = sf::Color(TRANSPARENT);
     array[index + 5].color = sf::Color(TRANSPARENT);
+
     //  }
     x += slot_width;
   }
@@ -787,11 +788,15 @@ void Inventory::craftingFlagClearBench() {
 
 // Debug printing to console the craftable items given current item quantities
 void Inventory::printCrafting() {
+  updateCraftableList();
   auto vec = crafting.getCraftable(item_quantities, crafting_flags);
-  std::cout << "Craftable: \n";
+
+  std::cout << "Craftable with flags " << std::bitset<8>(crafting_flags)
+            << std::dec;
   for (auto it = vec.begin(); it != vec.end(); it++) {
     std::cout << "Can craft " << it->output.getName() << std::endl;
   }
+  std::cout << std::flush;
 }
 
 // Debug printing to console the contents item_quantities
@@ -802,9 +807,8 @@ void Inventory::printInventory() {
   }
   std::cout << "Inventory:\n";
   for (auto it = inventory.begin(); it != inventory.end(); it++)
-    std::cout << it->getName() << " x" << it->getQuantity() << '\n';
-
-  std::cout << "Finished" << std::endl;
+    // std::cout << it->getName() << " x" << it->getQuantity() << '\n';
+    it->debugPrint();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -880,7 +884,6 @@ void Inventory::draw(sf::RenderWindow &window) {
         int index = getVertexFromPosition(mousePos);
 
         if (index != -1) {
-          std::cout << "Swapping" << std::endl;
           bool temp_filled = slot_filled[index];
           Item temp_item = inventory[index];
           moving = slot_filled[index];
@@ -905,7 +908,7 @@ void Inventory::draw(sf::RenderWindow &window) {
     updateCraftableList();
   }
 
-  window.draw(array);
+  window.draw(array, &item_texture);
 
   for (int slot = 0; slot < SLOTS; slot++) {
     if (inventory[slot].getQuantity() <= 1)
@@ -929,7 +932,7 @@ void Inventory::draw(sf::RenderWindow &window) {
     text.setOutlineThickness(TEXT_OUTLINE_SIZE);
     text.setStyle(sf::Text::Style::Bold);
 
-    window.draw(text);
+    window.draw(text, &item_texture);
   }
 
   if (moving) {
@@ -947,7 +950,7 @@ void Inventory::draw(sf::RenderWindow &window) {
     floating_icon[3].position = DownRight;
     floating_icon[4].position = DownLeft;
     floating_icon[5].position = UpLeft;
-    window.draw(floating_icon);
+    window.draw(floating_icon, &item_texture);
 
     if (floating_item.getQuantity() > 1) {
       sf::Vector2f position = floating_icon[2].position;
@@ -1004,5 +1007,5 @@ void Inventory::draw(sf::RenderWindow &window) {
 }
 
 void Inventory::drawCrafting(sf::RenderWindow &window) {
-  window.draw(crafting_array);
+  window.draw(crafting_array, &item_texture);
 }
