@@ -17,6 +17,10 @@
        ItemList[name].getColdResist(), ItemList[name].getActionFunction(),     \
        ItemList[name].getTooltipFunction())
 
+#define TEXTURE_SIZE 32.f
+#define TEXT(x, y)                                                             \
+  sf::Vector2f { x *TEXTURE_SIZE, y *TEXTURE_SIZE }
+
 // Shorthands for filling in 0s for the stats
 #define NOT_CONSUMABLE 0, 0, 0
 #define NOT_EQUIPABLE 0, 0
@@ -32,42 +36,69 @@ std::map<std::string, Item> ItemList{
     ///    Materials
     ////////////////////////////////////////////////////////////////////////////////
 
-    {"Stick", Item("Stick", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE, 0,
+    {"Stick", Item("Stick", TEXT(1, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                    NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
-    {"Stone", Item("Stone", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE, 0,
+    {"Stone", Item("Stone", TEXT(2, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                    NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+    {"Rope", Item("Rope", TEXT(3, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+                  NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
     // Maybe move raw meat to consumables?
-    {"Raw Meat", Item("Raw Meat", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE,
-                      0, NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+    {"Raw Meat", Item("Raw Meat", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+                      NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+    {"Grass", Item("Grass", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+                   NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+    {"Bowl", Item("Bowl", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+                  NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+    {"Hide", Item("Hide", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+                  NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+    {"Big Metal Pipe",
+     Item("Big Metal Pipe", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+          NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+    {"Fuel", Item("Fuel", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+                  NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+    {"Ignition", Item("Ignition", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+                      NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
 
     ////////////////////////////////////////////////////////////////////////////////
     ///    Tools
     ////////////////////////////////////////////////////////////////////////////////
-    {"Axe", Item("Axe", sf::Vector2f{0, 0}, 0, 10, 0, NOT_CONSUMABLE,
-                 NOT_EQUIPABLE, NULL, NULL)},
-
+    {"Axe", Item("Axe", TEXT(5, 0), 0, 1, 0, NOT_CONSUMABLE, NOT_EQUIPABLE,
+                 NULL, NULL)},
+    {"Pickaxe", Item("Pickaxe", TEXT(4, 0), 0, 1, 0, NOT_CONSUMABLE,
+                     NOT_EQUIPABLE, NULL, NULL)},
+    {"Shovel", Item("Shovel", TEXT(7, 0), 0, 1, 0, NOT_CONSUMABLE,
+                    NOT_EQUIPABLE, NULL, NULL)},
+    {"Sword", Item("Sword", TEXT(6, 0), 0, 1, 0, NOT_CONSUMABLE, NOT_EQUIPABLE,
+                   NULL, NULL)},
+    {"Campfire", Item("Campfire", TEXT(3, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+                      NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+    {"Flame Thrower",
+     Item("Flame Thrower", TEXT(3, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+          NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
     ////////////////////////////////////////////////////////////////////////////////
     ///    Equipment
     ////////////////////////////////////////////////////////////////////////////////
+    {"Clothes", Item("Clothes", TEXT(3, 0), 0, 1, EQUIPABLE, NOT_CONSUMABLE, 10,
+                     10, NULL, NULL)},
 
     ////////////////////////////////////////////////////////////////////////////////
     ///    Consumables
     ////////////////////////////////////////////////////////////////////////////////
-    {"Carrot",
-     Item("Carrot", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE,
-          1, 2, 0, NOT_EQUIPABLE, consumable_action, NULL)},
-    {"Cooked Meat",
-     Item("Cooked Meat", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE,
-          CONSUMABLE, 4, 6, 2, NOT_EQUIPABLE, consumable_action, NULL)},
+    {"Berries", Item("Berries", TEXT(8, 0), 0, DEFAULT_MAX_STACK_SIZE,
+                     CONSUMABLE, 1, 2, 0, NOT_EQUIPABLE, NULL, NULL)},
+    {"Carrot", Item("Carrot", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE,
+                    1, 2, 0, NOT_EQUIPABLE, NULL, NULL)},
+    {"Cooked Meat", Item("Cooked Meat", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE,
+                         CONSUMABLE, 4, 6, 2, NOT_EQUIPABLE, NULL, NULL)},
     {"Snowman Soup",
-     Item("Snowman Soup", sf::Vector2f{0, 0}, 0, DEFAULT_MAX_STACK_SIZE,
-          CONSUMABLE, 4, 6, 4, NOT_EQUIPABLE, consumable_action, soup_tooltip)},
+     Item("Snowman Soup", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 4,
+          6, 4, NOT_EQUIPABLE, NULL, soup_tooltip)},
 
     ////////////////////////////////////////////////////////////////////////////////
     ///    Misc/Testing
     ////////////////////////////////////////////////////////////////////////////////
     {"All The Things",
-     Item("All The Things", sf::Vector2f{0, 0}, 0, 99,
+     Item("All The Things", TEXT(0, 0), 0, 99,
           CONSUMABLE | TOOL | EQUIPABLE | BLOCK, 1, 1, 1, 1, 1)}
 
 };
