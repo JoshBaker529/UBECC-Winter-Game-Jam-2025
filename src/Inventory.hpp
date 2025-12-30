@@ -1280,8 +1280,8 @@ void Inventory::draw(sf::RenderWindow &window) {
       text.setLineSpacing(0.9f);
 
       sf::FloatRect fr = text.getGlobalBounds();
-      text.move(
-          sf::Vector2f{-(fr.size.x + TOOLTIP_OFFSET_LEFT), -TOOLTIP_OFFSET_UP});
+
+      text.move(sf::Vector2f{TOOLTIP_OFFSET_LEFT, 0});
       fr = text.getGlobalBounds();
 
       sf::RectangleShape rect(fr.size +
