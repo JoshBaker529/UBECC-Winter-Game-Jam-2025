@@ -44,6 +44,7 @@
 
 // .. exactly what it says
 #define VERTICES_PER_SQUARE 6
+#define EQUIP_VERTEX_INDEX ((((SLOTS * 2) + 1) * VERTICES_PER_SQUARE) + 6)
 
 // Colors!
 #define BACKGROUND_COLOR 0xF0F0F0FF
@@ -73,6 +74,7 @@
 // The index of the floating item
 // WARN: Not actually a valid array index!!
 #define FLOATING_INDEX (INT32_MAX)
+#define EQUIPMENT_INDEX (-2)
 
 // Crafting constants
 #define CRAFTING_ICON_WIDTH 70.f
@@ -121,6 +123,7 @@ private:
   bool moving;
 
   Item floating_item;
+  Item equipment;
   ItemQuantities item_quantities;
   Crafting crafting;
   CraftingFlags crafting_flags;
@@ -201,6 +204,13 @@ int Inventory::getVertexFromPosition(sf::Vector2i pos) {
   sf::Vector2f start_slot = array[first].position;
   sf::Vector2f end_slot = array[end].position;
 
+  if (pos.x > end_slot.x) {
+    if (pos.y > start_slot.y &&
+        pos.y < (start_slot.y + SLOT_SIZE - (SLOT_SIZE * .05))) {
+      return EQUIPMENT_INDEX;
+    }
+  }
+
   if (pos.x < start_slot.x || pos.x > end_slot.x || pos.y < start_slot.y ||
       pos.y > end_slot.y) {
     return -1;
@@ -253,6 +263,12 @@ void Inventory::updateTextures(int index) {
       tex = false;
     else
       tex = true;
+  } else if (index == EQUIPMENT_INDEX) {
+    if (equipment.getName() == "") {
+      tex = false;
+    } else {
+      tex = true;
+    }
   } else
     tex = slot_filled[index];
 
@@ -282,6 +298,30 @@ void Inventory::updateTextures(int index) {
       floating_icon[4].color = sf::Color(0xFFFFFFFF);
       floating_icon[5].color = sf::Color(0xFFFFFFFF);
 
+      return;
+    }
+    if (index == EQUIPMENT_INDEX) {
+      sf::Vector2f texStart = equipment.getTexturePosition();
+
+      sf::Vector2f UpLeft = texStart,
+                   UpRight(texStart.x + TEXTURE_WIDTH, texStart.y),
+                   DownLeft(texStart.x, texStart.y + TEXTURE_HEIGHT),
+                   DownRight(texStart.x + TEXTURE_WIDTH,
+                             texStart.y + TEXTURE_HEIGHT);
+
+      array[EQUIP_VERTEX_INDEX + 12 + 0].texCoords = UpLeft;
+      array[EQUIP_VERTEX_INDEX + 12 + 1].texCoords = UpRight;
+      array[EQUIP_VERTEX_INDEX + 12 + 2].texCoords = DownRight;
+      array[EQUIP_VERTEX_INDEX + 12 + 3].texCoords = DownRight;
+      array[EQUIP_VERTEX_INDEX + 12 + 4].texCoords = DownLeft;
+      array[EQUIP_VERTEX_INDEX + 12 + 5].texCoords = UpLeft;
+
+      array[EQUIP_VERTEX_INDEX + 12 + 0].color = sf::Color(0xFFFFFFFF);
+      array[EQUIP_VERTEX_INDEX + 12 + 1].color = sf::Color(0xFFFFFFFF);
+      array[EQUIP_VERTEX_INDEX + 12 + 2].color = sf::Color(0xFFFFFFFF);
+      array[EQUIP_VERTEX_INDEX + 12 + 3].color = sf::Color(0xFFFFFFFF);
+      array[EQUIP_VERTEX_INDEX + 12 + 4].color = sf::Color(0xFFFFFFFF);
+      array[EQUIP_VERTEX_INDEX + 12 + 5].color = sf::Color(0xFFFFFFFF);
       return;
     }
     Item item = inventory[index];
@@ -334,6 +374,16 @@ void Inventory::updateTextures(int index) {
       floating_icon[vector_index + 3].color = sf::Color(TRANSPARENT);
       floating_icon[vector_index + 4].color = sf::Color(TRANSPARENT);
       floating_icon[vector_index + 5].color = sf::Color(TRANSPARENT);
+      return;
+    }
+    if (index == EQUIPMENT_INDEX) {
+
+      array[EQUIP_VERTEX_INDEX + 12 + 0].color = sf::Color(TRANSPARENT);
+      array[EQUIP_VERTEX_INDEX + 12 + 1].color = sf::Color(TRANSPARENT);
+      array[EQUIP_VERTEX_INDEX + 12 + 2].color = sf::Color(TRANSPARENT);
+      array[EQUIP_VERTEX_INDEX + 12 + 3].color = sf::Color(TRANSPARENT);
+      array[EQUIP_VERTEX_INDEX + 12 + 4].color = sf::Color(TRANSPARENT);
+      array[EQUIP_VERTEX_INDEX + 12 + 5].color = sf::Color(TRANSPARENT);
       return;
     }
     array[vector_index + 0].color = sf::Color(TRANSPARENT);
@@ -488,14 +538,18 @@ Inventory::Inventory(sf::Vector2f vec) {
   open = false;
   crafting_flags = 0;
   crafting_position = 0;
+  floating_item = Item();
+  equipment = Item();
 
   // NOTE:
   // Explanation of vertexCount:
   // SLOTS  -- number of inventory slots
   // * 2    -- One for the base layer, one for the items layer
   // + 1    -- Background rectangle
+  // + 1    -- Equipment background rectangle
+  // + 2    -- Equipment Slot base and item layers
   array = sf::VertexArray(sf::PrimitiveType::Triangles,
-                          ((SLOTS * 2) + 1) * VERTICES_PER_SQUARE);
+                          ((SLOTS * 2) + 6) * VERTICES_PER_SQUARE);
   floating_icon =
       sf::VertexArray(sf::PrimitiveType::Triangles, VERTICES_PER_SQUARE);
 
@@ -596,6 +650,63 @@ Inventory::Inventory(sf::Vector2f vec) {
     //  }
     x += slot_width;
   }
+
+  // Equipment slot
+  int index = EQUIP_VERTEX_INDEX;
+  x = start.x + WIDTH;
+  y = start.y;
+
+  UpLeft = sf::Vector2f{x, y};
+  UpRight = sf::Vector2f{x + SLOT_SIZE, y};
+  DownLeft = sf::Vector2f{x, y + SLOT_SIZE};
+  DownRight = sf::Vector2f{x + SLOT_SIZE, y + SLOT_SIZE};
+
+  array[index + 0].position = UpLeft;
+  array[index + 1].position = UpRight;
+  array[index + 2].position = DownRight;
+  array[index + 3].position = DownRight;
+  array[index + 4].position = DownLeft;
+  array[index + 5].position = UpLeft;
+  array[index + 0].color = sf::Color(BACKGROUND_COLOR);
+  array[index + 1].color = sf::Color(BACKGROUND_COLOR);
+  array[index + 2].color = sf::Color(BACKGROUND_COLOR);
+  array[index + 3].color = sf::Color(BACKGROUND_COLOR);
+  array[index + 4].color = sf::Color(BACKGROUND_COLOR);
+  array[index + 5].color = sf::Color(BACKGROUND_COLOR);
+
+  index += 6;
+
+  UpLeft = sf::Vector2f{x + border_width, y + border_height};
+  UpRight = sf::Vector2f{x + SLOT_SIZE - border_width, y + border_height};
+  DownLeft = sf::Vector2f{x + border_width, y + SLOT_SIZE - border_height};
+  DownRight = sf::Vector2f{x + SLOT_SIZE + -border_width,
+                           y + SLOT_SIZE - border_height};
+  array[index + 0].position = UpLeft;
+  array[index + 1].position = UpRight;
+  array[index + 2].position = DownRight;
+  array[index + 3].position = DownRight;
+  array[index + 4].position = DownLeft;
+  array[index + 5].position = UpLeft;
+  array[index + 0].color = sf::Color(SLOT_COLOR);
+  array[index + 1].color = sf::Color(SLOT_COLOR);
+  array[index + 2].color = sf::Color(SLOT_COLOR);
+  array[index + 3].color = sf::Color(SLOT_COLOR);
+  array[index + 4].color = sf::Color(SLOT_COLOR);
+  array[index + 5].color = sf::Color(SLOT_COLOR);
+
+  index += 6;
+  array[index + 0].position = UpLeft;
+  array[index + 1].position = UpRight;
+  array[index + 2].position = DownRight;
+  array[index + 3].position = DownRight;
+  array[index + 4].position = DownLeft;
+  array[index + 5].position = UpLeft;
+  array[index + 0].color = sf::Color(TRANSPARENT);
+  array[index + 1].color = sf::Color(TRANSPARENT);
+  array[index + 2].color = sf::Color(TRANSPARENT);
+  array[index + 3].color = sf::Color(TRANSPARENT);
+  array[index + 4].color = sf::Color(TRANSPARENT);
+  array[index + 5].color = sf::Color(TRANSPARENT);
 
   // NOTE:
   // Explanation of vertexCount:
@@ -968,7 +1079,7 @@ void Inventory::draw(sf::RenderWindow &window) {
   if (Controls::tapped(sf::Mouse::Button::Right)) {
     if (!moving) {
       int index = getVertexFromPosition(mousePos);
-      if (slot_filled[index]) {
+      if (index >= 0 && slot_filled[index]) {
         moving = true;
         floating_item = inventory[index];
         floating_item.setQuantity(floating_item.getQuantity() / 2);
@@ -979,9 +1090,17 @@ void Inventory::draw(sf::RenderWindow &window) {
   } else if (Controls::tapped(sf::Mouse::Button::Left)) {
     int index = getVertexFromPosition(mousePos);
     if (!moving) { // Not currently moving
-      if (slot_filled[index]) {
+      if (index == -2) {
+        floating_item = equipment;
+        equipment = Item();
+        updateTextures(FLOATING_INDEX);
+        updateTextures(EQUIPMENT_INDEX);
+        PlayerStats.defense -= floating_item.getDefenseGained();
+        PlayerStats.cold_resist -= floating_item.getColdResist();
         moving = true;
-        if (index != -1) {
+      } else if (slot_filled[index]) {
+        moving = true;
+        if (index >= 0) {
           floating_item = inventory[index];
           removeItem(index);
           updateTextures(index);
@@ -1002,50 +1121,71 @@ void Inventory::draw(sf::RenderWindow &window) {
         }
       }
     } else { // Currently moving an item
+      if (index == EQUIPMENT_INDEX) {
+        uint8_t type = floating_item.getType();
+        if ((type & EQUIPABLE) == EQUIPABLE) {
 
-      if (inventory[index].getName() == floating_item.getName()) {
-        // items are the same, add to stack
-        int empty =
-            inventory[index].getMaxStack() - inventory[index].getQuantity();
-        if (empty > 0) {
-          if (empty > floating_item.getQuantity()) {
-            inventory[index].addQuantity(floating_item.getQuantity());
-            item_quantities[inventory[index].getName()] +=
-                floating_item.getQuantity();
-            floating_item = Item();
+          Item temp = equipment;
+          equipment = floating_item;
+          floating_item = temp;
+
+          if (floating_item.getName() == "")
             moving = false;
-          } else {
-            inventory[index].addQuantity(empty);
-            item_quantities[inventory[index].getName()] += empty;
 
-            floating_item.addQuantity(-empty); // lol I guess this works
+          updateTextures(FLOATING_INDEX);
+          updateTextures(EQUIPMENT_INDEX);
+
+          PlayerStats.defense -= floating_item.getDefenseGained();
+          PlayerStats.cold_resist -= floating_item.getColdResist();
+          PlayerStats.defense += equipment.getDefenseGained();
+          PlayerStats.cold_resist += equipment.getColdResist();
+        }
+      } else {
+        if (inventory[index].getName() == floating_item.getName()) {
+          // items are the same, add to stack
+          int empty =
+              inventory[index].getMaxStack() - inventory[index].getQuantity();
+          if (empty > 0) {
+            if (empty > floating_item.getQuantity()) {
+              inventory[index].addQuantity(floating_item.getQuantity());
+              item_quantities[inventory[index].getName()] +=
+                  floating_item.getQuantity();
+              floating_item = Item();
+              moving = false;
+            } else {
+              inventory[index].addQuantity(empty);
+              item_quantities[inventory[index].getName()] += empty;
+
+              floating_item.addQuantity(-empty); // lol I guess this works
+            }
           }
         }
 
-      } else {
-        // Swap items
+        else {
+          // Swap items
 
-        int index = getVertexFromPosition(mousePos);
+          int index = getVertexFromPosition(mousePos);
 
-        if (index != -1) {
-          bool temp_filled = slot_filled[index];
-          Item temp_item = inventory[index];
-          moving = slot_filled[index];
+          if (index >= 0) {
+            bool temp_filled = slot_filled[index];
+            Item temp_item = inventory[index];
+            moving = slot_filled[index];
 
-          slot_filled[index] = true;
-          inventory[index] = floating_item;
-          item_quantities[floating_item.getName()] +=
-              floating_item.getQuantity();
+            slot_filled[index] = true;
+            inventory[index] = floating_item;
+            item_quantities[floating_item.getName()] +=
+                floating_item.getQuantity();
 
-          if (temp_filled) {
-            floating_item = temp_item;
-            item_quantities[temp_item.getName()] -= temp_item.getQuantity();
-          } else {
-            floating_item = Item();
+            if (temp_filled) {
+              floating_item = temp_item;
+              item_quantities[temp_item.getName()] -= temp_item.getQuantity();
+            } else {
+              floating_item = Item();
+            }
+
+            updateTextures(FLOATING_INDEX);
+            updateTextures(index);
           }
-
-          updateTextures(FLOATING_INDEX);
-          updateTextures(index);
         }
       }
     }
@@ -1122,8 +1262,15 @@ void Inventory::draw(sf::RenderWindow &window) {
   } else {
     // Only draw text if not holding item
     int index = getVertexFromPosition(mousePos);
+    Item item = Item();
+    if (index == EQUIPMENT_INDEX) {
+      item = equipment;
+    }
     if (index >= 0 && slot_filled[index]) {
-      sf::Text text(font, inventory[index].getTooltip());
+      item = inventory[index];
+    }
+    if (item.getName() != "") {
+      sf::Text text(font, item.getTooltip());
       text.setPosition(sf::Vector2f{static_cast<float>(mousePos.x),
                                     static_cast<float>(mousePos.y)});
       text.setFillColor(sf::Color(TEXT_FILL));
