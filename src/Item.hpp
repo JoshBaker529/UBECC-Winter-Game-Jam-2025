@@ -136,13 +136,16 @@ std::string Item::getTooltip() {
     ss << tooltipHover(this);
     return ss.str();
   }
-  ss << name << '\n' << stack_size << "/" << max_stack_size;
+  ss << name;
+  if (max_stack_size != 1) {
+    ss << '\n' << stack_size << "/" << max_stack_size;
+  }
 
   if (type & CONSUMABLE)
     ss << "\nHP: " << hp_gained << "\nFood: " << hunger_gained
        << "\nWarmth: " << warmth_gained;
 
-  if (type & EQUIPABLE)
+  if ((type & EQUIPABLE) == EQUIPABLE)
     ss << "\nDefense: " << defense << "\nCold Resistance: " << cold_resist;
 
   if (type & TOOL)
@@ -200,8 +203,8 @@ void Item::addQuantity(int qty) { stack_size += qty; }
 
 // Simple debug print to console
 void Item::debugPrint() {
-  printf("Name: %s, Texture: %f %f\n", name.c_str(), texture_position.x,
-         texture_position.y);
+  printf("Name: %s, Texture: %f %f, Qty: %d\n", name.c_str(),
+         texture_position.x, texture_position.y, stack_size);
 }
 
 // Default constructor
