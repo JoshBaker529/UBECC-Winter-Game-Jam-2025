@@ -1,11 +1,14 @@
 #ifndef PICKUP_HPP
 #define PICKUP_HPP
 
+#include "Entity.hpp"
+#include "Player.hpp"
+
 #include <SFML/Graphics.hpp>
 
 class Pickup: public Entity{
 private:
-	size_t itemId = 0;
+	string type;
 	
 public:
 
@@ -16,6 +19,12 @@ public:
 	}
 
 	virtual void step(sf::RenderWindow &window, sf::View &view, sf::Texture &texture, Tilemap &tilemap){
+		if(Player::all.size() > 0){
+			Player *player = &Player::all.front();
+			if( collision(*player) ) dead = true;
+		}
+		
+		// Draw
 		sf::Sprite sprite(texture);
 		sprite.setPosition( getBoundingBox().position + (getBoundingBox().size/2.f) );
 		sprite.setOrigin( origin );

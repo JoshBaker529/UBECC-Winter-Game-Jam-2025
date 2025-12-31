@@ -178,102 +178,110 @@ private:
 public:
 
 	static void generateLevel(Background &background, Tilemap &tilemap){
-		heightmap(background,tilemap);
+		const sf::Vector2i levelSize = background.getSize();
+		for(int y = 0; y < levelSize.y; y++){
+			for(int x = 0; x < levelSize.x; x++){
+				background.setTileAtIndex( {x,y}, 1 );
+			}
+		}
+		background.render();
 	}
 	
-	static void heightmap(Background &background, Tilemap &tilemap){
-		const sf::Vector2i levelSize = background.getSize();
-		if(levelSize.x <= 0 || levelSize.y <= 0) return;
+	// static void heightmap(Background &background, Tilemap &tilemap){
+		// const sf::Vector2i levelSize = background.getSize();
+		// if(levelSize.x <= 0 || levelSize.y <= 0) return;
 		
-		vector<vector<float>> heightmap( levelSize.y, vector<float>(levelSize.x) );
+		// vector<vector<float>> heightmap( levelSize.y, vector<float>(levelSize.x) );
 		
 		
-	}
+	// }
 
-	static void waveFunctionCollapse(Background &background, Tilemap &tilemap){
-		const sf::Vector2i levelSize = background.getSize();
-		if(levelSize.x <= 0 || levelSize.y <= 0) return;
+	// static void waveFunctionCollapse(Background &background, Tilemap &tilemap){
+		// const sf::Vector2i levelSize = background.getSize();
+		// if(levelSize.x <= 0 || levelSize.y <= 0) return;
 		
-		vector<vector<Tile>> level( levelSize.y, vector<Tile>(levelSize.x) );
+		// vector<vector<Tile>> level( levelSize.y, vector<Tile>(levelSize.x) );
+		// size_t superpositions = levelSize.x * levelSize.y;
 
-		// Populate choices (initally, anything is possible)
-		for(int y = 0; y < levelSize.y; y++){
-			for(int x = 0; x < levelSize.x; x++){
+		// goto fuck;
+
+		// // Populate choices (initally, anything is possible)
+		// for(int y = 0; y < levelSize.y; y++){
+			// for(int x = 0; x < levelSize.x; x++){
 				
-				for(int i = 1; i < Count; i++)
-					level[y][x].choices.push_back( (Terrain)i );
+				// for(int i = 1; i < Count; i++)
+					// level[y][x].choices.push_back( (Terrain)i );
 				
-			}
-		}
+			// }
+		// }
 		
-		// Violations Map: If I'm Grass, what can my neighbors NOT be?
-		unordered_map<Terrain, unordered_set<Terrain>> violations;
-		violations[Grass] = unordered_set<Terrain>{ Water, Sand, Stone };
-		violations[Dirt] =  unordered_set<Terrain>{ Water, Snow };
-		violations[Sand] =  unordered_set<Terrain>{ Grass, Stone, Snow };
-		violations[Water] = unordered_set<Terrain>{ Grass, Dirt,  Stone, Snow };
-		violations[Stone] = unordered_set<Terrain>{ Grass, Water, Snow };
-		violations[Snow] =  unordered_set<Terrain>{ Dirt,  Sand,  Water, Stone };
+		// // Violations Map: If I'm Grass, what can my neighbors NOT be?
+		// unordered_map<Terrain, unordered_set<Terrain>> violations;
+		// violations[Grass] = unordered_set<Terrain>{ Water, Sand, Stone };
+		// violations[Dirt] =  unordered_set<Terrain>{ Water, Snow };
+		// violations[Sand] =  unordered_set<Terrain>{ Grass, Stone, Snow };
+		// violations[Water] = unordered_set<Terrain>{ Grass, Dirt,  Stone, Snow };
+		// violations[Stone] = unordered_set<Terrain>{ Grass, Water, Snow };
+		// violations[Snow] =  unordered_set<Terrain>{ Dirt,  Sand,  Water, Stone };
 		
-		size_t superpositions = levelSize.x * levelSize.y;
 		
-		level[0][0].chosenOne = Snow;
-		superpositions--;
+		// level[0][0].chosenOne = Snow;
+		// superpositions--;
 		
-		// Eliminate choices that violate the rules
-		for(int y = 1; y < levelSize.y-1; y++){
-			for(int x = 1; x < levelSize.x-1; x++){
+		// // Eliminate choices that violate the rules
+		// for(int y = 1; y < levelSize.y-1; y++){
+			// for(int x = 1; x < levelSize.x-1; x++){
 				
-				// Top
-				Terrain top = level[y-1][x].chosenOne;
-				if( top != Terrain::None ){
-					auto i = level[y][x].choices.begin();
-					for(; i != level[y][x].choices.end(); i++){
-						if( violations[top].find(*i) != violations[top].end() ){
-							level[y][x].choices.erase(i);
-							break;
-						}
-					}
-				}
+				// // Top
+				// Terrain top = level[y-1][x].chosenOne;
+				// if( top != Terrain::None ){
+					// auto i = level[y][x].choices.begin();
+					// for(; i != level[y][x].choices.end(); i++){
+						// if( violations[top].find(*i) != violations[top].end() ){
+							// level[y][x].choices.erase(i);
+							// break;
+						// }
+					// }
+				// }
 				
-				if( level[y][x].choices.size() == 0 ){
-					level[y][x].chosenOne = Terrain::None;
-					goto fuck;
-				}
+				// if( level[y][x].choices.size() == 0 ){
+					// level[y][x].chosenOne = Terrain::None;
+					// goto fuck;
+				// }
 								
-				// Check the tile above me. Has it decided? If it has:
-				// For any of my possibilites, is that chosen one in violation?
-				// If so, remove it from my possibilites.
-				// If I have none left, we're fucked!
-			}
-		}
+				// // Check the tile above me. Has it decided? If it has:
+				// // For any of my possibilites, is that chosen one in violation?
+				// // If so, remove it from my possibilites.
+				// // If I have none left, we're fucked!
+			// }
+		// }
 		
-		cout << superpositions << endl;
+		// cout << superpositions << endl;
 		
-		// Now the choices are all valid. Randomly select one.
-		for(int y = 0; y < levelSize.y; y++){
-			for(int x = 0; x < levelSize.x; x++){
-				int randomIndex = rand() % level[y][x].choices.size();
-				auto theOne = level[y][x].choices.begin();
+		// // Now the choices are all valid. Randomly select one.
+		// for(int y = 0; y < levelSize.y; y++){
+			// for(int x = 0; x < levelSize.x; x++){
+				// int randomIndex = rand() % level[y][x].choices.size();
+				// auto theOne = level[y][x].choices.begin();
 				
-				for(int i = 0; i < randomIndex; i++) theOne++;
-				level[y][x].chosenOne = *theOne;
-			}
-		}
+				// for(int i = 0; i < randomIndex; i++) theOne++;
+				// level[y][x].chosenOne = *theOne;
+			// }
+		// }
 		
-		fuck:
+		// fuck:
 		
-		// Output
-		for(int y = 0; y < levelSize.y; y++){
-			for(int x = 0; x < levelSize.x; x++){
-				int texture = level[y][x].chosenOne;
-				background.setTileAtIndex( sf::Vector2i(x,y), texture );
-			}
-		}
+		// // Output
+		// for(int y = 0; y < levelSize.y; y++){
+			// for(int x = 0; x < levelSize.x; x++){
+				// int texture = level[y][x].chosenOne;
+				// background.setTileAtIndex( sf::Vector2i(x,y), 1 );
+			// }
+		// }
 		
-		background.render();
-		tilemap.render();
-	}
+		// background.render();
+		// tilemap.render();
+	// }
 
 	// static void generateLevel(Background &background){
 		// const int LEVEL_WIDTH  = background.getSize().x;

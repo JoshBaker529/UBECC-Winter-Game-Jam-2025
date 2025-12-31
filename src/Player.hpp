@@ -5,6 +5,7 @@
 #include "DeltaTime.hpp"
 #include "Entity.hpp"
 #include "Tilemap.hpp"
+#include "Particles.hpp"
 
 #include<list>
 using std::list;
@@ -26,6 +27,9 @@ public:
 		input.x = (float)Controls::held(sf::Keyboard::Key::D)-(float)Controls::held(sf::Keyboard::Key::A);
 		input.y = (float)Controls::held(sf::Keyboard::Key::S)-(float)Controls::held(sf::Keyboard::Key::W);
 		if(input != sf::Vector2f{0,0} ) input = input.normalized();
+		
+		// sf::Vector2f vs = view.getSize();
+		// Particles::makeRange( {position.x-(vs.x/2.f),position.y-(vs.y/2.f),100.f}, {0.f,vs.y,vs.y}, {0.f,0.f,0.f}, sf::Color::White, 0.1f);
 		
 		// Movement
 		applyForce(input*momentum);
