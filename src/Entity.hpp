@@ -18,7 +18,7 @@ protected:
 
     sf::Vector2f position, movement;
     sf::FloatRect boundingBox;
-	bool dead = true;
+	bool dead = false;
 
 public:
 
@@ -96,14 +96,26 @@ public:
         return (boundingBox.findIntersection(other.getBoundingBox()) != std::nullopt);
     }
 	
+	bool isDead(){ return dead; }
+	void kill(){ dead = true; }
+	
 	virtual void step(sf::RenderWindow&, sf::View&, sf::Texture&, Tilemap&){}
 	virtual void draw(sf::RenderWindow&, sf::Texture&){}
 	
 	template<class T>
 	static void stepAll(list<T> &all, sf::RenderWindow &window, sf::View &view, sf::Texture &texture, Tilemap &tilemap){
-		for(auto i = all.begin(); i != all.end(); i++){
-			i->step(window,view,texture,tilemap);			
+		// list<list<T>::iterator> deadOnes;
+		// for(auto i = all.begin(); i != all.end(); i++){
+			// i->step(window,view,texture,tilemap);
+			// if(i->dead) all.erase(i);
+		// }
+		list<typename list<T>::iterator> deadThings;
+		for (auto i = all.begin(); i != all.end(); i++) {
+			i->step(window,view,texture,tilemap);
+			if (i->dead) deadThings.push_back(i);
 		}
+		for (auto i = deadThings.begin(); i != deadThings.end(); i++)
+			all.erase(*i);
 	}
 	
 	static void submitSprite(sf::Sprite sprite){

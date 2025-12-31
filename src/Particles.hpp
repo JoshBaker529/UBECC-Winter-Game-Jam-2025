@@ -1,12 +1,110 @@
-#ifndef PARTICLE_HPP
-#define PARTICLE_HPP
+#ifndef PARTICLES_HPP
+#define PARTICLES_HPP
 
 #include "Utilities.hpp"
+#include "DeltaTime.hpp"
 
 #include <list>
 using std::list;
 
+/*
 
+Different kinds of paticles:
+	-Block Break
+	-Blood
+	-Wind
+	
+Factora:
+	-Gravity
+	-Weight (weightless particles could float?
+
+*/
+
+class Particles{
+private:
+	
+	struct Particle{
+		sf::Vector3f position, move;
+		sf::Vector2f variation;
+		sf::Color color;
+		float weight, lifespan;
+	};
+
+	static inline list<Particle> particles;
+	static inline sf::VertexArray verts;
+	static inline sf::Vector3f wind;
+	
+public:
+
+	static void make(
+	sf::Vector3f position, sf::Vector3f move, sf::Color color, float weight){
+		Particle particle{ position, move, {0.f,0.f}, color, weight, 120.f };
+		
+		particle.move.x += randFloat(-1.f,1.f);
+		particle.move.y += randFloat(-1.f,1.f);
+		
+		particle.variation.x += randFloat(-10.f,10.f);
+		particle.variation.y += randFloat(-10.f,10.f);
+		
+		particles.push_back(particle);
+	}
+	
+	static void makeRange(
+	sf::Vector3f position, sf::Vector3f range,
+	sf::Vector3f move, sf::Color color, float weight){
+		
+		position.x += randFloat(0.f, range.x);
+		position.y += randFloat(0.f, range.y);
+		position.z += randFloat(0.f, range.z);
+		
+		make(position, move, color, weight);
+		
+	}
+	
+	static sf::Vector2f project(sf::Vector3f position){
+		return sf::Vector2f( position.x, position.y-position.z );
+	}
+	
+	static void draw(sf::RenderWindow &window){
+		if(particles.empty()) return;
+		
+		verts.setPrimitiveType(sf::PrimitiveType::Triangles);
+		verts.clear();
+		
+		sf::Vector3f gravity(0.f,0.f,-0.1f);
+		wind = sf::Vector3f(0.1f,0.f,0.f);
+		
+		// Simulate, Submit for drawing
+		for(auto i = particles.begin(); i != particles.end(); i++){
+			if(i->lifespan < 0) particles.erase(i);
+			
+			if(i->position.z <= 0.f){
+				i->position.z = 0.f;
+				i->move = {0.f,0.f,0.f};
+			}else{
+				i->move += gravity*i->weight;
+				i->move += wind;
+				i->position += i->move;
+			}
+			
+			sf::Vector2f v1,v2,v3;
+			v1 = project(i->position);
+			v2 = v1 + i->variation;
+			v3 = v1 + i->variation.perpendicular();
+			
+			verts.append( sf::Vertex{ v1, i->color} );
+			verts.append( sf::Vertex{ v2, i->color} );
+			verts.append( sf::Vertex{ v3, i->color} );
+			
+			i->lifespan -= DeltaTime::get();
+		}
+		
+		window.draw(verts);
+	}
+
+};
+
+/*
 class Explosions{
 private:
 
@@ -77,5 +175,6 @@ public:
 	}		
 	
 };
+*/
 
 #endif
