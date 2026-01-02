@@ -1165,7 +1165,7 @@ void Inventory::draw(sf::RenderWindow &window) {
   }
 
   if (Controls::tapped(sf::Keyboard::Key::P)) {
-    Item item = ItemList["Berries"];
+    Item item = ItemList["Campfire"];
     item.setQuantity(10);
     addItem(item);
   }

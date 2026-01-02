@@ -140,9 +140,6 @@ std::string Item::getTooltip() {
     return ss.str();
   }
   ss << name;
-  if (max_stack_size != 1) {
-    ss << '\n' << stack_size << "/" << max_stack_size;
-  }
 
   if (type & CONSUMABLE)
     ss << "\nHP: " << hp_gained << "\nFood: " << hunger_gained
@@ -150,12 +147,6 @@ std::string Item::getTooltip() {
 
   if ((type & EQUIPABLE) == EQUIPABLE)
     ss << "\nDefense: " << defense << "\nCold Resistance: " << cold_resist;
-
-  if (type & TOOL)
-    ss << "\nIt's a tool!";
-
-  if (type & BLOCK)
-    ss << "\nIt's a block!";
 
   return ss.str();
 }

@@ -28,6 +28,7 @@
 
 // Function prototypes for any custom functions needed
 std::string soup_tooltip(Item *);
+std::string campfire_tooltip(Item *);
 void consumable_action(Item *item);
 
 std::map<std::string, Item> ItemList{
@@ -71,7 +72,7 @@ std::map<std::string, Item> ItemList{
     {"Sword", Item("Sword", TEXT(6, 0), 0, 1, 0, NOT_CONSUMABLE, NOT_EQUIPABLE,
                    NULL, NULL)},
     {"Campfire", Item("Campfire", TEXT(3, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
-                      NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
+                      NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, campfire_tooltip)},
     {"Flame Thrower",
      Item("Flame Thrower", TEXT(3, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
           NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
@@ -85,16 +86,16 @@ std::map<std::string, Item> ItemList{
     ///    Consumables
     ////////////////////////////////////////////////////////////////////////////////
     {"Berries",
-     Item("Berries", TEXT(8, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 1, 2, 0,
-          NOT_EQUIPABLE, consumable_action, NULL)},
+     Item("Berries", TEXT(8, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 5, 10,
+          0, NOT_EQUIPABLE, consumable_action, NULL)},
     {"Carrot", Item("Carrot", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE,
-                    1, 2, 0, NOT_EQUIPABLE, consumable_action, NULL)},
+                    5, 10, 0, NOT_EQUIPABLE, consumable_action, NULL)},
     {"Cooked Meat",
-     Item("Cooked Meat", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 4,
-          6, 2, NOT_EQUIPABLE, consumable_action, NULL)},
+     Item("Cooked Meat", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 40,
+          60, 20, NOT_EQUIPABLE, consumable_action, NULL)},
     {"Snowman Soup",
-     Item("Snowman Soup", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 4,
-          6, 4, NOT_EQUIPABLE, consumable_action, soup_tooltip)},
+     Item("Snowman Soup", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 60,
+          80, 60, NOT_EQUIPABLE, consumable_action, soup_tooltip)},
 
     ////////////////////////////////////////////////////////////////////////////////
     ///    Misc/Testing
@@ -139,5 +140,13 @@ std::string soup_tooltip(Item *item) {
      << "\nHP: " << item->getHpGained() << "\nFood: " << item->getHungerGained()
      << "\nWarmth: " << item->getWarmthGained();
 
+  return ss.str();
+}
+
+std::string campfire_tooltip(Item *item) {
+  std::stringstream ss;
+  ss << item->getName() << "\n"
+     << "Will go out if exposed \nto the wind for too long.\n"
+     << "Wind direction rotates \nslowly as time goes on.";
   return ss.str();
 }
