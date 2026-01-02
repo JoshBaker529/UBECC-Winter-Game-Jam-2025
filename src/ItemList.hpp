@@ -28,8 +28,7 @@
 
 // Function prototypes for any custom functions needed
 std::string soup_tooltip(Item *);
-
-void consumable_action(Item *);
+void consumable_action(Item *item);
 
 std::map<std::string, Item> ItemList{
 
@@ -85,8 +84,9 @@ std::map<std::string, Item> ItemList{
     ////////////////////////////////////////////////////////////////////////////////
     ///    Consumables
     ////////////////////////////////////////////////////////////////////////////////
-    {"Berries", Item("Berries", TEXT(8, 0), 0, DEFAULT_MAX_STACK_SIZE,
-                     CONSUMABLE, 1, 2, 0, NOT_EQUIPABLE, NULL, NULL)},
+    {"Berries",
+     Item("Berries", TEXT(8, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 1, 2, 0,
+          NOT_EQUIPABLE, consumable_action, NULL)},
     {"Carrot", Item("Carrot", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE,
                     1, 2, 0, NOT_EQUIPABLE, NULL, NULL)},
     {"Cooked Meat", Item("Cooked Meat", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE,
@@ -107,8 +107,8 @@ std::map<std::string, Item> ItemList{
 ////////////////////////////////////////////////////////////////////////////////
 ///     Custom Action Functions
 ////////////////////////////////////////////////////////////////////////////////
-
 void consumable_action(Item *item) {
+
   PlayerStats.health += item->getHpGained();
   PlayerStats.hunger += item->getHungerGained();
   PlayerStats.warmth += item->getWarmthGained();

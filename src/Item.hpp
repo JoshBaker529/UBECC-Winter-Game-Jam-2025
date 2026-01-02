@@ -75,6 +75,8 @@ public:
   float getDefenseGained();
   float getColdResist();
   actionFunction getActionFunction();
+  void useActionFunction();
+  void setActionFunction(actionFunction);
   tooltipFunction getTooltipFunction();
   void setQuantity(int);
   void addQuantity(int);
@@ -190,6 +192,10 @@ float Item::getColdResist() { return cold_resist; }
 
 // Returns the pointer to the action function
 actionFunction Item::getActionFunction() { return useAction; }
+
+void Item::useActionFunction() { useAction(this); }
+
+void Item::setActionFunction(actionFunction func) { useAction = func; }
 
 // Returns the pointer to the tooltip function
 tooltipFunction Item::getTooltipFunction() { return tooltipHover; }
