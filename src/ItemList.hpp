@@ -7,7 +7,7 @@
 #include <map>
 #include <sstream>
 
-#define DEFAULT_MAX_STACK_SIZE 10
+#define DEFAULT_MAX_STACK_SIZE 99
 
 // A macro for building off of the item list
 #define ITEM(name, qty)                                                        \
