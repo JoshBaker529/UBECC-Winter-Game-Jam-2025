@@ -1,3 +1,4 @@
+#pragma once
 // The whole list of possible default items
 
 #include "Item.hpp"

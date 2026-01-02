@@ -1,3 +1,4 @@
+#pragma once
 
 #include "ItemList.hpp" // Includes Item
 #include <vector>
@@ -22,8 +23,8 @@ struct Recipe {
 
 // The full list of recipes
 static std::vector<Recipe> recipes{
-    Recipe{ITEM("axe", 1),
-           Ingredients{std::pair("stick", 3), std::pair("stone", 3)},
+    Recipe{ITEM("Axe", 1),
+           Ingredients{std::pair("Stick", 3), std::pair("Stone", 3)},
            CRAFTING_BENCH},
     Recipe{ITEM("idfk", 1),
            Ingredients{std::pair("one", 1), std::pair("two", 2),

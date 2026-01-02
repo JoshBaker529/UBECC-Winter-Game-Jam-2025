@@ -1,3 +1,4 @@
+#pragma once
 // This class holds the framework for every item in the game
 
 #include "SFML/Graphics/RenderWindow.hpp"
