@@ -1,3 +1,4 @@
+#pragma once
 // This file holds the structure for the inventory menu
 // As of right now, it does not save what the inventory is
 

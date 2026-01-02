@@ -1,3 +1,5 @@
+#pragma once
+
 // This class holds all the information regarding the player stats
 
 #include "SFML/Graphics/BlendMode.hpp"
