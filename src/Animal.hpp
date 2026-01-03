@@ -19,6 +19,8 @@ private:
   bool canMove;
 
 public:
+  float health = 100.f;
+  
   Animal(sf::Vector2f position, sf::Vector2f size)
       : Entity(position, size), angle(sf::degrees(0)), turn(1), canMove(true) {
     clock.start();

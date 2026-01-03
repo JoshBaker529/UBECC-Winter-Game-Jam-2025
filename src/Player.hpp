@@ -63,8 +63,11 @@ public:
       StatsContainer::stats.warmth -= WINDDAMAGE * dt;
     }
 
+	inventory.craftingFlagSetFire(false);
     if (nearCampfire) {
       StatsContainer::stats.warmth += (WINDDAMAGE + .1f) * dt;
+	inventory.craftingFlagSetFire(true);
+	  
     }
 
     StatsContainer::stats.hunger -= HUNGERDAMAGE * dt;

@@ -15,7 +15,7 @@ private:
 	
 public:
 
-	Sword() : Entity(position, sf::Vector2f(48, 48)){
+	Sword() : Entity(position, sf::Vector2f(96, 96)){
 		
 	}
 	
@@ -63,14 +63,22 @@ public:
 			}
 		}
 		
-		// for(auto i = Animal:all.begin(); i != Animal::all.end(); i++){
-			// if( !collision(*i) ) continue;
-			// sf::Vector2f to = i->getPosition()-position;
-			// if(to != sf::Vector2f(0.f,0.f) ){ 
-				// i->applyForce(to.normalized()*10.f);
-				// Particles::burst( {i->getPosition().x,i->getPosition().y,0.f}, sf::Color::White );
-			// }
-		// }
+		for(auto i = Animal::all.begin(); i != Animal::all.end(); i++){
+			if( !collision(*i) ) continue;
+			sf::Vector2f to = i->getPosition()-position;
+			if(to != sf::Vector2f(0.f,0.f) ){ 
+				i->applyForce(to.normalized()*10.f);
+				Particles::burst( {i->getPosition().x,i->getPosition().y,0.f}, sf::Color::Red );
+				i->health -= 5.f;
+				if(i->health <= 0.f){
+					i->kill();
+					Pickup::all.push_back(Pickup(i->getPosition(), "Raw Meat"));
+					Pickup::all.push_back(Pickup(i->getPosition(), "Hide"));
+				}
+				lethal = false;
+				
+			}
+		}
 		
 		sf::Sprite sprite(texture);
 		sprite.setPosition(position);

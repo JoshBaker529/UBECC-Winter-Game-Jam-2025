@@ -98,7 +98,7 @@
 #define CRAFTING_FLAG_EMPTY5_INDEX 6
 #define CRAFTING_FLAG_EMPTY6_INDEX 7
 
-#define DEBUG true
+#define DEBUG false
 
 // Variables to hold where the starting positions are for moving an item
 
