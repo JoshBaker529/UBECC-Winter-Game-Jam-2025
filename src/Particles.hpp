@@ -28,16 +28,20 @@ private:
 		sf::Vector2f variation;
 		sf::Color color;
 		float weight, lifespan;
+		bool checkCollision = false;
 	};
 
 	static inline list<Particle> particles;
 	static inline sf::VertexArray verts;
-	static inline sf::Vector3f wind;
+	static inline sf::Angle wind;
 	
 public:
 
+	static sf::Angle getWindDirection(){ return wind; }
+	static void setWindDirection(sf::Angle direction){ wind = direction; }
+
 	static void make(
-	sf::Vector3f position, sf::Vector3f move, sf::Color color, float weight){
+	sf::Vector3f position, sf::Vector3f move, sf::Color color, float weight, bool checkCollision = false){
 		Particle particle{ position, move, {0.f,0.f}, color, weight, 120.f };
 		
 		particle.move.x += randFloat(-1.f,1.f);
@@ -46,46 +50,97 @@ public:
 		particle.variation.x += randFloat(-10.f,10.f);
 		particle.variation.y += randFloat(-10.f,10.f);
 		
+		particle.checkCollision = checkCollision;
+		
 		particles.push_back(particle);
 	}
 	
-	static void makeRange(
-	sf::Vector3f position, sf::Vector3f range,
-	sf::Vector3f move, sf::Color color, float weight){
+	// static void makeRange(
+	// sf::Vector3f position, sf::Vector3f range,
+	// sf::Vector3f move, sf::Color color, float weight){
 		
-		position.x += randFloat(0.f, range.x);
-		position.y += randFloat(0.f, range.y);
-		position.z += randFloat(0.f, range.z);
+		// position.x += randFloat(0.f, range.x);
+		// position.y += randFloat(0.f, range.y);
+		// position.z += randFloat(0.f, range.z);
 		
-		make(position, move, color, weight);
+		// make(position, move, color, weight);
 		
+	// }
+	
+	static void burst(sf::Vector3f position, sf::Color color){
+		const int amount = 10;
+		for(int i = 0; i < amount; i++){
+			make(position, {0.f,0.f,4.f}, color, 2.f);
+		}
+	}
+	
+	static void smoke(sf::Vector3f position, sf::Color color){
+		make(position, {0.f,0.f,0.f}, color, -0.1f);
+	}
+	
+	static void snow(sf::View &view){
+		sf::Vector2f min, max, vs;
+		vs = view.getSize();
+		
+		float z = 300.f;
+		
+		min.x = view.getCenter().x-(vs.x/2.f);
+		min.y = view.getCenter().y-(vs.y/2.f);
+		max.x = view.getCenter().x+(vs.x/2.f);
+		max.y = view.getCenter().y+(vs.y/2.f)+z;
+		
+		float x = randFloat(min.x,max.x);
+		float y = randFloat(min.y,max.y);
+		
+		make( {x,y,z}, {0.f,0.f,0.f}, sf::Color::White, 0.1f, true);
+	}
+	
+	static bool positionIsExposed(sf::Vector2f position, Tilemap &tilemap){
+		sf::Vector2f windVec = sf::Vector2f(10.f,0.f).rotatedBy(wind);
+		for(int i = 0; i < 20; i++){
+			if(tilemap.collision(position)) return false;
+			position -= windVec;
+		}
+		return true;
 	}
 	
 	static sf::Vector2f project(sf::Vector3f position){
 		return sf::Vector2f( position.x, position.y-position.z );
 	}
 	
-	static void draw(sf::RenderWindow &window){
+	static void draw(sf::RenderWindow &window, Tilemap &tilemap){
 		if(particles.empty()) return;
+		
+		float dt = DeltaTime::get();
 		
 		verts.setPrimitiveType(sf::PrimitiveType::Triangles);
 		verts.clear();
 		
 		sf::Vector3f gravity(0.f,0.f,-0.1f);
-		wind = sf::Vector3f(0.1f,0.f,0.f);
+		sf::Vector2f windVec2 = sf::Vector2f(0.1f,0.f).rotatedBy(wind);
+		sf::Vector3f windVec3 = sf::Vector3f(windVec2.x,windVec2.y,0.f);
+		
+		list<typename list<Particle>::iterator> deadParticles;
 		
 		// Simulate, Submit for drawing
 		for(auto i = particles.begin(); i != particles.end(); i++){
-			if(i->lifespan < 0) particles.erase(i);
+			// if(i->lifespan < 0) particles.erase(i);
+			if(i->lifespan < 0) deadParticles.push_back(i);
 			
 			if(i->position.z <= 0.f){
 				i->position.z = 0.f;
 				i->move = {0.f,0.f,0.f};
 			}else{
 				i->move += gravity*i->weight;
-				i->move += wind;
-				i->position += i->move;
+				i->move += windVec3;
+				i->position += i->move*dt;
 			}
+			
+			// if(i->checkCollision){
+				// if(tilemap.collision( {i->position.x, i->position.y-i->position.z} )){
+					// particles.erase(i);
+				// }
+			// }
 			
 			sf::Vector2f v1,v2,v3;
 			v1 = project(i->position);
@@ -98,6 +153,9 @@ public:
 			
 			i->lifespan -= DeltaTime::get();
 		}
+		
+		for (auto i = deadParticles.begin(); i != deadParticles.end(); i++)
+			particles.erase(*i);
 		
 		window.draw(verts);
 	}

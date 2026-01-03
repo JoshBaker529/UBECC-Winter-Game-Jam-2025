@@ -1,5 +1,6 @@
 #pragma once
 // This file holds everything involved with crafting;
+#pragma once
 
 #include "RecipeList.hpp" // Includes ItemList.hpp, Item.hpp
 #include <vector>
@@ -14,11 +15,10 @@ class Crafting {
 private:
   int maxIngredients;
 
-  int calclulateMaxIngredients();
-
 public:
   std::vector<Recipe> getCraftable(ItemQuantities, CraftingFlags);
   int getMaxIngredients();
+  int calclulateMaxIngredients();
 
   Crafting();
   Crafting(Crafting &&) = default;
@@ -58,9 +58,11 @@ int Crafting::getMaxIngredients() { return maxIngredients; }
 int Crafting::calclulateMaxIngredients() {
   int max = 0;
   for (auto it = recipes.begin(); it != recipes.end(); it++) {
+
     if (it->ingredients.size() > max)
       max = it->ingredients.size();
   }
+  maxIngredients = max;
 
   return max;
 }

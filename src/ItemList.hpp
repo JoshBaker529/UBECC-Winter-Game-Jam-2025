@@ -1,6 +1,6 @@
 #pragma once
 // The whole list of possible default items
-
+#pragma once
 #include "Item.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "Stats.hpp"
@@ -47,20 +47,20 @@ std::map<std::string, Item> ItemList{
     {"Rope", Item("Rope", TEXT(3, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                   NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
     // Maybe move raw meat to consumables?
-    {"Raw Meat", Item("Raw Meat", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+    {"Raw Meat", Item("Raw Meat", TEXT(12, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                       NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
-    {"Grass", Item("Grass", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+    {"Grass", Item("Grass", TEXT(10, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                    NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
-    {"Bowl", Item("Bowl", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+    {"Bowl", Item("Bowl", TEXT(11, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                   NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
-    {"Hide", Item("Hide", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+    {"Hide", Item("Hide", TEXT(16, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                   NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
     {"Big Metal Pipe",
-     Item("Big Metal Pipe", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+     Item("Big Metal Pipe", TEXT(18, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
           NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
-    {"Fuel", Item("Fuel", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+    {"Fuel", Item("Fuel", TEXT(19, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                   NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
-    {"Ignition", Item("Ignition", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+    {"Ignition", Item("Ignition", TEXT(20, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                       NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -74,16 +74,16 @@ std::map<std::string, Item> ItemList{
                     NOT_EQUIPABLE, NULL, NULL)},
     {"Sword", Item("Sword", TEXT(6, 0), 0, 1, 0, NOT_CONSUMABLE, NOT_EQUIPABLE,
                    NULL, NULL)},
-    {"Campfire", Item("Campfire", TEXT(3, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+    {"Campfire", Item("Campfire", TEXT(14, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
                       NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, campfire_tooltip)},
     {"Flame Thrower",
-     Item("Flame Thrower", TEXT(3, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
+     Item("Flame Thrower", TEXT(21, 0), 0, DEFAULT_MAX_STACK_SIZE, 0,
           NOT_CONSUMABLE, NOT_EQUIPABLE, NULL, NULL)},
     ////////////////////////////////////////////////////////////////////////////////
     ///    Equipment
     ////////////////////////////////////////////////////////////////////////////////
-    {"Clothes", Item("Clothes", TEXT(3, 0), 0, 1, EQUIPABLE, NOT_CONSUMABLE, 10,
-                     10, NULL, NULL)},
+    {"Clothes", Item("Clothes", TEXT(17, 0), 0, 1, EQUIPABLE, NOT_CONSUMABLE,
+                     10, 10, NULL, NULL)},
 
     ////////////////////////////////////////////////////////////////////////////////
     ///    Consumables
@@ -91,14 +91,14 @@ std::map<std::string, Item> ItemList{
     {"Berries",
      Item("Berries", TEXT(8, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 5, 10,
           0, NOT_EQUIPABLE, consumable_action, NULL)},
-    {"Carrot", Item("Carrot", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE,
+    {"Carrot", Item("Carrot", TEXT(9, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE,
                     5, 10, 0, NOT_EQUIPABLE, consumable_action, NULL)},
     {"Cooked Meat",
-     Item("Cooked Meat", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 40,
+     Item("Cooked Meat", TEXT(13, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 40,
           60, 20, NOT_EQUIPABLE, consumable_action, NULL)},
     {"Snowman Soup",
-     Item("Snowman Soup", TEXT(0, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE, 60,
-          80, 60, NOT_EQUIPABLE, consumable_action, soup_tooltip)},
+     Item("Snowman Soup", TEXT(15, 0), 0, DEFAULT_MAX_STACK_SIZE, CONSUMABLE,
+          60, 80, 60, NOT_EQUIPABLE, consumable_action, soup_tooltip)},
 
     ////////////////////////////////////////////////////////////////////////////////
     ///    Misc/Testing
@@ -114,20 +114,20 @@ std::map<std::string, Item> ItemList{
 ////////////////////////////////////////////////////////////////////////////////
 void consumable_action(Item *item) {
 
-  PlayerStats.health += item->getHpGained();
-  PlayerStats.hunger += item->getHungerGained();
-  PlayerStats.warmth += item->getWarmthGained();
+  StatsContainer::stats.health += item->getHpGained();
+  StatsContainer::stats.hunger += item->getHungerGained();
+  StatsContainer::stats.warmth += item->getWarmthGained();
 
-  if (PlayerStats.health > PlayerStats.max_health) {
-    PlayerStats.health = PlayerStats.max_health;
+  if (StatsContainer::stats.health > StatsContainer::stats.max_health) {
+    StatsContainer::stats.health = StatsContainer::stats.max_health;
   }
 
-  if (PlayerStats.hunger > PlayerStats.max_hunger) {
-    PlayerStats.hunger = PlayerStats.max_hunger;
+  if (StatsContainer::stats.hunger > StatsContainer::stats.max_hunger) {
+    StatsContainer::stats.hunger = StatsContainer::stats.max_hunger;
   }
 
-  if (PlayerStats.warmth > PlayerStats.max_warmth) {
-    PlayerStats.warmth = PlayerStats.max_warmth;
+  if (StatsContainer::stats.warmth > StatsContainer::stats.max_warmth) {
+    StatsContainer::stats.warmth = StatsContainer::stats.max_warmth;
   }
 }
 
