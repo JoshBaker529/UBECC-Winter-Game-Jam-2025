@@ -18,11 +18,11 @@
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <array>
+#include <bitset>
 #include <cstdint>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <bitset>
 
 // TODO:
 // Need to work out what is needed for equipment/hotbar
@@ -831,7 +831,7 @@ Inventory::Inventory(sf::Vector2f vec) {
     start_y += CRAFTING_ICON_HEIGHT;
   }
   hotbar = sf::VertexArray(sf::PrimitiveType::Triangles,
-                           ((HOTBAR_SLOTS * 2) + 1) * VERTICES_PER_SQUARE);
+                           ((HOTBAR_SLOTS * 2) + 2) * VERTICES_PER_SQUARE);
 
   UpLeft = sf::Vector2f{start.x, start.y};
   UpRight = sf::Vector2f{start.x + WIDTH, start.y};
