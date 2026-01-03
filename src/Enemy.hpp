@@ -1,5 +1,7 @@
 #include "DeltaTime.hpp"
 #include "Entity.hpp"
+#include "Player.hpp"
+#include "Stats.hpp"
 #include "Tilemap.hpp"
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/PrimitiveType.hpp>
@@ -160,14 +162,15 @@ protected:
 
 class regularSnowman : Enemy {
 public:
-  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
-            bool draw) {
+  regularSnowman(sf::Vector2f position) : Enemy(position, {24, 24}) {}
+  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world) {
     // static sf::VertexArray temp(sf::PrimitiveType::LineStrip);
 
+    const float dt = DeltaTime::get();
     const float DUMDDISTANCE = 100.f;
-    if (target != nullptr && draw) {
+    const float WARMTHDAMAGE = .1f;
+    if (target != nullptr) {
 
-      const float dt = DeltaTime::get();
       const float momentum = .5f * dt, friction = .25f * dt, terminal = 4.f;
 
       if (path.empty() &&
@@ -224,6 +227,12 @@ public:
       }
     }
 
+    if (!Player::all.empty() && collision(Player::all.front())) {
+      StatsContainer::stats.warmth -= WARMTHDAMAGE * dt;
+      if (StatsContainer::stats.warmth < 0)
+        StatsContainer::stats.warmth = 0;
+    }
+
     sf::RectangleShape rect;
     rect.setPosition(getBoundingBox().position);
     rect.setSize(getBoundingBox().size);
@@ -231,24 +240,94 @@ public:
     window.draw(rect);
     // window.draw(temp);
   }
-  
+
+  static void stepAll(sf::RenderWindow &window, sf::View &view,
+                      Tilemap &world) {
+
+    const int MAXENEMIES = 10;
+    const int SPAWNCHANCE = 100;
+
+    if (all.size() < MAXENEMIES && rand() % SPAWNCHANCE == 1) {
+      sf::Vector2f randomOffscreenPoint = view.getCenter();
+      if (rand() % 2 == 1) {
+        randomOffscreenPoint.x += view.getSize().x;
+      } else {
+        randomOffscreenPoint.x -= view.getSize().x;
+      }
+
+      if (rand() % 2 == 1) {
+        randomOffscreenPoint.y += rand() % (int)(view.getSize().y / 2);
+      } else {
+        randomOffscreenPoint.y -= rand() % (int)(view.getSize().y / 2);
+      }
+
+      all.push_back(regularSnowman(randomOffscreenPoint));
+
+      if (!Player::all.empty())
+        all.back().setTarget(Player::all.front());
+    }
+
+    for (regularSnowman &snowman : all) {
+      snowman.step(window, view, world);
+    }
+  }
   static inline std::list<regularSnowman> all;
 };
 
 class ghostSnowman : public Enemy {
 public:
-  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
-            bool draw) {
+  ghostSnowman(sf::Vector2f position) : Enemy(position, {24, 24}) {}
+  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world) {
 
     const float dt = DeltaTime::get();
     const float momentum = .5f * dt, friction = .25f * dt, terminal = 4.f;
+    const float WARMTHDAMAGE = .1f;
 
     sf::Vector2f distTo = target->getPosition() - position;
     applyForce(distTo.normalized() * momentum);
     applyResistance(friction);
     cap(terminal);
     move();
+    if (!Player::all.empty() && collision(Player::all.front())) {
+      StatsContainer::stats.warmth -= WARMTHDAMAGE * dt;
+      if (StatsContainer::stats.warmth < 0)
+        StatsContainer::stats.warmth = 0;
+    }
+    sf::RectangleShape rect;
+    rect.setPosition(getBoundingBox().position);
+    rect.setSize(getBoundingBox().size);
+    rect.setFillColor(sf::Color::Blue);
+    window.draw(rect);
   }
-  
-  static inline std::list<ghostEnemy> all;
+
+  static void stepAll(sf::RenderWindow &window, sf::View &view,
+                      Tilemap &world) {
+
+    const int MAXENEMIES = 10;
+    const int SPAWNCHANCE = 100;
+
+    if (all.size() < MAXENEMIES && rand() % SPAWNCHANCE == 1) {
+      sf::Vector2f randomOffscreenPoint = view.getCenter();
+      if (rand() % 2 == 1) {
+        randomOffscreenPoint.x += view.getSize().x;
+      } else {
+        randomOffscreenPoint.x -= view.getSize().x;
+      }
+
+      if (rand() % 2 == 1) {
+        randomOffscreenPoint.y += rand() % (int)(view.getSize().y / 2);
+      } else {
+        randomOffscreenPoint.y -= rand() % (int)(view.getSize().y / 2);
+      }
+      all.push_back(ghostSnowman(randomOffscreenPoint));
+
+      if (!Player::all.empty())
+        all.back().setTarget(Player::all.front());
+    }
+
+    for (ghostSnowman &snowman : all) {
+      snowman.step(window, view, world);
+    }
+  }
+  static inline std::list<ghostSnowman> all;
 };
