@@ -1,6 +1,7 @@
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
+#include "Campfire.hpp"
 #include "Controls.hpp"
 #include "DeltaTime.hpp"
 #include "Entity.hpp"
@@ -8,8 +9,8 @@
 #include "Particles.hpp"
 #include "Stats.hpp"
 #include "Tilemap.hpp"
-#include "Campfire.hpp"
 
+#include <SFML/Window/Keyboard.hpp>
 #include <list>
 using std::list;
 
@@ -25,6 +26,9 @@ public:
     const float dt = DeltaTime::get();
     const float momentum = 0.5f * dt, friction = 0.25f * dt, terminal = 4.f;
     const float COLDDAMAGE = .1f;
+    const float WINDDAMAGE = .05f;
+    const float HUNGERDAMAGE = .01f;
+    const float PASSIVEHEALING = .1f;
 
     // Input
     sf::Vector2f input;
@@ -43,14 +47,33 @@ public:
     bound();
 
     // Near a campfire
-	bool nearCampfire = false;
-	float nearDist = 128.f;
-	for(auto i = Campfire::all.begin(); i != Campfire::all.end(); i++){
-		if( (i->getPosition()-position).lengthSquared() <= pow(nearDist,2) ){
-			nearCampfire = true;
-			break;
-		}
-	}
+    bool nearCampfire = false;
+    float nearDist = 128.f;
+    for (auto i = Campfire::all.begin(); i != Campfire::all.end(); i++) {
+      if ((i->getPosition() - position).lengthSquared() <= pow(nearDist, 2)) {
+        nearCampfire = true;
+        break;
+      }
+    }
+
+    if (Particles::positionIsExposed(position, tilemap)) {
+      StatsContainer::stats.warmth -= WINDDAMAGE * dt;
+    }
+
+    if (nearCampfire) {
+      StatsContainer::stats.warmth += (WINDDAMAGE + .1f) * dt;
+    }
+
+    StatsContainer::stats.hunger -= HUNGERDAMAGE * dt;
+
+    if (StatsContainer::stats.warmth > StatsContainer::stats.max_warmth / 2 &&
+        StatsContainer::stats.hunger > StatsContainer::stats.max_hunger / 2) {
+      StatsContainer::stats.health += PASSIVEHEALING * dt;
+      if (StatsContainer::stats.health > StatsContainer::stats.max_health) {
+
+        StatsContainer::stats.health = StatsContainer::stats.max_health;
+      }
+    }
 
     // Move Camera
     view.move((position - view.getCenter()) / 1.f);
