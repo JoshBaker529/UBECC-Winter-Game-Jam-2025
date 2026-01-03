@@ -69,4 +69,6 @@ public:
     window.draw(rect);
     window.draw(rect2);
   }
+  
+  static inline std::list<Animal> all;
 };

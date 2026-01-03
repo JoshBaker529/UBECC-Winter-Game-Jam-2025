@@ -1,12 +1,17 @@
 #include "DeltaTime.hpp"
 #include "Entity.hpp"
+#include "Player.hpp"
+#include "Stats.hpp"
 #include "Tilemap.hpp"
+#include "Utilities.hpp"
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/PrimitiveType.hpp>
 #include <SFML/Graphics/VertexArray.hpp>
+#include <SFML/System/Clock.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <cmath>
 #include <cstdlib>
+#include <ctime>
 #include <functional>
 #include <list>
 #include <stack>
@@ -19,6 +24,7 @@ protected:
   Entity *target = nullptr;
 
   sf::VertexArray body;
+  float terminal;
 
 public:
   Enemy(sf::Vector2f position, sf::Vector2f size)
@@ -45,6 +51,8 @@ public:
     body[0].color = body[1].color = body[2].color = body[3].color =
         body[4].color = body[5].color = body[6].color = body[7].color =
             sf::Color::Blue;
+
+    terminal = 1.f + randFloat(1, 3);
   }
 
   virtual void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
@@ -160,15 +168,16 @@ protected:
 
 class regularSnowman : Enemy {
 public:
-  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
-            bool draw) {
+  regularSnowman(sf::Vector2f position) : Enemy(position, {24, 24}) {}
+  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world, sf::Texture &texture) {
     // static sf::VertexArray temp(sf::PrimitiveType::LineStrip);
 
+    const float dt = DeltaTime::get();
     const float DUMDDISTANCE = 100.f;
-    if (target != nullptr && draw) {
+    const float WARMTHDAMAGE = .1f;
+    if (target != nullptr) {
 
-      const float dt = DeltaTime::get();
-      const float momentum = .5f * dt, friction = .25f * dt, terminal = 4.f;
+      const float momentum = .5f * dt, friction = .25f * dt;
 
       if (path.empty() &&
           dist(world.worldToGridCoords(target->getPosition()),
@@ -224,27 +233,145 @@ public:
       }
     }
 
-    sf::RectangleShape rect;
-    rect.setPosition(getBoundingBox().position);
-    rect.setSize(getBoundingBox().size);
-    rect.setFillColor(sf::Color::Blue);
-    window.draw(rect);
+    if (!Player::all.empty() && collision(Player::all.front())) {
+      StatsContainer::stats.warmth -= WARMTHDAMAGE * dt;
+      if (StatsContainer::stats.warmth < 0)
+        StatsContainer::stats.warmth = 0;
+    }
+
+	sf::Sprite sprite(texture);
+    sprite.setPosition(position);
+    sprite.setOrigin(sf::Vector2f(16.f, 48.f));
+    sprite.setTextureRect(sf::IntRect({0, 224}, {32, 64}));
+    Entity::submitSprite(sprite);
+
+    // sf::RectangleShape rect;
+    // rect.setPosition(getBoundingBox().position);
+    // rect.setSize(getBoundingBox().size);
+    // rect.setFillColor(sf::Color::Blue);
+    // window.draw(rect);
     // window.draw(temp);
   }
+
+  static void stepAll(sf::RenderWindow &window, sf::View &view,
+                      Tilemap &world, sf::Texture &texture) {
+
+    const int MAXENEMIES = 10;
+
+    if (delay.getElapsedTime().asSeconds() > delayTime) {
+
+      if (clock.getElapsedTime().asSeconds() > spawnInterval) {
+        if (all.size() < MAXENEMIES && rand()) {
+          sf::Vector2f randomOffscreenPoint = view.getCenter();
+          if (rand() % 2 == 1) {
+            randomOffscreenPoint.x += view.getSize().x;
+          } else {
+            randomOffscreenPoint.x -= view.getSize().x;
+          }
+
+          if (rand() % 2 == 1) {
+            randomOffscreenPoint.y += rand() % (int)(view.getSize().y / 2);
+          } else {
+            randomOffscreenPoint.y -= rand() % (int)(view.getSize().y / 2);
+          }
+
+          all.push_back(regularSnowman(randomOffscreenPoint));
+
+          if (!Player::all.empty())
+            all.back().setTarget(Player::all.front());
+        }
+        spawnInterval--;
+        clock.restart();
+      }
+    }
+
+    for (regularSnowman &snowman : all) {
+      snowman.step(window, view, world, texture);
+    }
+  }
+  static inline float spawnInterval = 150;
+  static inline float delayTime = 300;
+  static inline sf::Clock delay;
+  static inline sf::Clock clock;
+  static inline std::list<regularSnowman> all;
 };
 
 class ghostSnowman : public Enemy {
 public:
-  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
-            bool draw) {
+  ghostSnowman(sf::Vector2f position) : Enemy(position, {24, 24}) {}
+  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world, sf::Texture &texture) {
 
     const float dt = DeltaTime::get();
-    const float momentum = .5f * dt, friction = .25f * dt, terminal = 4.f;
+    const float momentum = .5f * dt, friction = .25f * dt;
+    const float WARMTHDAMAGE = .1f;
 
     sf::Vector2f distTo = target->getPosition() - position;
     applyForce(distTo.normalized() * momentum);
     applyResistance(friction);
     cap(terminal);
     move();
+    if (!Player::all.empty() && collision(Player::all.front())) {
+      StatsContainer::stats.warmth -= WARMTHDAMAGE * dt;
+      if (StatsContainer::stats.warmth < 0)
+        StatsContainer::stats.warmth = 0;
+    }
+	
+	sf::Sprite sprite(texture);
+    sprite.setPosition(position);
+    sprite.setOrigin(sf::Vector2f(16.f, 48.f));
+    sprite.setTextureRect(sf::IntRect({0, 224}, {32, 64}));
+    Entity::submitSprite(sprite);
+	
+    // sf::RectangleShape rect;
+    // rect.setPosition(getBoundingBox().position);
+    // rect.setSize(getBoundingBox().size);
+    // rect.setFillColor(sf::Color::Blue);
+    // window.draw(rect);
   }
+
+  static void stepAll(sf::RenderWindow &window, sf::View &view,
+                      Tilemap &world, sf::Texture &texture) {
+
+    const int MAXENEMIES = 10;
+    const int SPAWNCHANCE = 200;
+
+    float STARTSECONDS = 300;
+    float increase = 60;
+
+    if (delay.getElapsedTime().asSeconds() > delayTime) {
+
+      if (clock.getElapsedTime().asSeconds() > spawnInterval) {
+        if (all.size() < MAXENEMIES) {
+          sf::Vector2f randomOffscreenPoint = view.getCenter();
+          if (rand() % 2 == 1) {
+            randomOffscreenPoint.x += view.getSize().x;
+          } else {
+            randomOffscreenPoint.x -= view.getSize().x;
+          }
+
+          if (rand() % 2 == 1) {
+            randomOffscreenPoint.y += rand() % (int)(view.getSize().y / 2);
+          } else {
+            randomOffscreenPoint.y -= rand() % (int)(view.getSize().y / 2);
+          }
+          all.push_back(ghostSnowman(randomOffscreenPoint));
+
+          if (!Player::all.empty())
+            all.back().setTarget(Player::all.front());
+        }
+        spawnInterval--;
+        clock.restart();
+      }
+    }
+
+    for (ghostSnowman &snowman : all) {
+      snowman.step(window, view, world, texture);
+    }
+  }
+
+  static inline float spawnInterval = 150;
+  static inline float delayTime = 900;
+  static inline sf::Clock delay;
+  static inline sf::Clock clock;
+  static inline std::list<ghostSnowman> all;
 };
