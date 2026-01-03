@@ -34,7 +34,7 @@ public:
 		applyResistance(friction);
 		cap(terminal);
 		move(tilemap);
-		
+		bound();
 		
 		// Near a campfire
 		

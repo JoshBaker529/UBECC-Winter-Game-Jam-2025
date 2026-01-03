@@ -80,9 +80,6 @@ private:
 	
 	sf::Angle windAngle;
 	
-	
-
-	
 
 public:
   ~MainState() {}
@@ -160,8 +157,11 @@ public:
 		
 		Player::all.push_back( Player( {1600.f,1600.f} ) );
 		Campfire::all.push_back( Campfire( {100.f,100.f} ) );
-		Plant::all.push_back( Plant({1600.f+50.f,1600.f+50.f}, Plant::Type::Grass) );
-
+		Plant::all.push_back( Plant({1600.f+50.f,1600.f+50.f}, Plant::Type::Tree) );
+		Plant::all.push_back( Plant({1600.f+150.f,1600.f+50.f}, Plant::Type::DeadBush) );
+		Plant::all.push_back( Plant({1600.f+250.f,1600.f+50.f}, Plant::Type::BerryBush) );
+		Plant::all.push_back( Plant({1600.f+350.f,1600.f+50.f}, Plant::Type::Grass) );
+		Plant::all.push_back( Plant({1600.f+450.f,1600.f+50.f}, Plant::Type::Carrot) );
 		
 
   }
@@ -238,7 +238,6 @@ public:
 			windAngle += sf::degrees(0.05f*DeltaTime::get());
 			Particles::setWindDirection(windAngle);
 			
-			
 			drawBackground();
 			
 			// Object draw()'s here
@@ -273,11 +272,12 @@ public:
 				
 				Item hb = Player::inventory.getHotbarItem();
 				
-				if( inRange && Controls::tapped(sf::Mouse::Button::Left) && hb.getName() == "Pickaxe"){
-					shadows.setTile( mousePosition, 0 );
-					shadows.render();
+				if( inRange && Controls::tapped(sf::Mouse::Button::Left)){
 					
-					if(midTiles.getTile(mousePosition)->type != Tilemap::Tile::Type::air){
+					if(midTiles.getTile(mousePosition)->type != Tilemap::Tile::Type::air && hb.getName() == "Pickaxe"){
+						shadows.setTile( mousePosition, 0 );
+						shadows.render();
+						
 						midTiles.removeTile(mousePosition);
 						midTiles.render();
 						
@@ -288,6 +288,40 @@ public:
 						sf::Vector2f center = fp+(ts/2.f);
 						Pickup::all.push_back( Pickup( center, "Stone" ) );
 						Particles::burst( {center.x,center.y,1.f}, sf::Color(64,64,64) );
+					}else{
+						for(auto i = Plant::all.begin(); i != Plant::all.end(); i++){
+							sf::FloatRect bb = i->getBoundingBox();
+							if(bb.contains(mousePosition)) {
+								switch(i->type){
+									case Plant::Type::Tree:
+										Particles::burst( {mousePosition.x,mousePosition.y,1.f}, sf::Color(115,97,75) );
+										for(int i = 0; i < 10; i++)
+											Pickup::all.push_back( Pickup( mousePosition, "Stick" ) );
+										i->kill();
+										break;
+									case Plant::Type::DeadBush:
+										Particles::burst( {mousePosition.x,mousePosition.y,1.f}, sf::Color(115,97,75) );
+										Pickup::all.push_back( Pickup( mousePosition, "Stick" ) );
+										i->kill();
+										break;
+									case Plant::Type::BerryBush:
+										Particles::burst( {mousePosition.x,mousePosition.y,1.f}, sf::Color(115,97,75) );
+										Pickup::all.push_back( Pickup( mousePosition, "Berries" ) );
+										i->kill();
+										break;
+									case Plant::Type::Grass:
+										Particles::burst( {mousePosition.x,mousePosition.y,1.f}, sf::Color(99,153,129) );
+										Pickup::all.push_back( Pickup( mousePosition, "Grass" ) );
+										i->kill();
+										break;
+									case Plant::Type::Carrot:
+										Particles::burst( {mousePosition.x,mousePosition.y,1.f}, sf::Color(99,153,129) );
+										Pickup::all.push_back( Pickup( mousePosition, "Carrot" ) );
+										i->kill();
+										break;
+								}
+							}
+						}
 					}
 					
 				}
