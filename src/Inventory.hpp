@@ -1358,7 +1358,8 @@ void Inventory::draw(sf::RenderWindow &window) {
         updateTextures(EQUIPMENT_INDEX);
         StatsContainer::stats.defense -= floating_item.getDefenseGained();
         StatsContainer::stats.cold_resist -= floating_item.getColdResist();
-        moving = true;
+        if (floating_item.getName() != "")
+          moving = true;
       } else if (slot_filled[index]) {
         moving = true;
         if (index >= 0) {
