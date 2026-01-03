@@ -18,6 +18,9 @@ class Entity;
 class Tilemap;
 
 class Player : public Entity {
+private:
+	int frame = 0;
+	
 public:
   Player(sf::Vector2f position) : Entity(position, sf::Vector2f(24, 24)) {}
 
@@ -26,7 +29,7 @@ public:
     const float dt = DeltaTime::get();
     const float momentum = 0.5f * dt, friction = 0.25f * dt, terminal = 4.f;
     const float COLDDAMAGE = .1f;
-    const float WINDDAMAGE = .05f;
+    const float WINDDAMAGE = .01f;
     const float HUNGERDAMAGE = .01f;
     const float PASSIVEHEALING = .1f;
 
@@ -76,8 +79,12 @@ public:
     }
 	
 	if( StatsContainer::stats.health < 0.f ) StatsContainer::stats.health = 0.f;
+	if( StatsContainer::stats.health > StatsContainer::stats.max_health ) StatsContainer::stats.health = StatsContainer::stats.max_health;
 	if( StatsContainer::stats.warmth < 0.f ) StatsContainer::stats.warmth = 0.f;
+	if( StatsContainer::stats.warmth > StatsContainer::stats.max_warmth ) StatsContainer::stats.warmth = StatsContainer::stats.max_warmth;
 	if( StatsContainer::stats.hunger < 0.f ) StatsContainer::stats.hunger = 0.f;
+	if( StatsContainer::stats.hunger > StatsContainer::stats.max_hunger ) StatsContainer::stats.hunger = StatsContainer::stats.max_hunger;
+	
 	
 	if(StatsContainer::stats.health <= 0.f){
 		dead = true;
@@ -101,15 +108,21 @@ public:
       StatsContainer::stats.health -= COLDDAMAGE * dt;
     }
     // Draw Code
-	int frame = 0;
-	sf::Vector2f cursor = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-	float angle = (position.angleTo(cursor)).wrapUnsigned().asDegrees();
-	cout << angle << endl;
+	// frame = 0;
+	// sf::Vector2f cursor = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+	// float angle = ((cursor-position).angle()+sf::degrees(45/2.f)).wrapUnsigned().asDegrees();
+	// frame += (int)(angle / 45);
+	
+	if( movement != sf::Vector2f{0.f,0.f} ){
+		frame = 0;
+		float angle = ((movement).angle()+sf::degrees(45/2)).wrapUnsigned().asDegrees();
+		frame += (int)(angle / 45);
+	}
 	
     sf::Sprite sprite(texture);
     sprite.setPosition(position);
     sprite.setOrigin(sf::Vector2f(16.f, 48.f));
-    sprite.setTextureRect(sf::IntRect({0, 224}, {32, 64}));
+    sprite.setTextureRect(sf::IntRect({frame*32, 224}, {32, 64}));
     Entity::submitSprite(sprite);
   }
 

@@ -25,6 +25,8 @@ protected:
 
   sf::VertexArray body;
   float terminal;
+  
+  int frame = 0;
 
 public:
   Enemy(sf::Vector2f position, sf::Vector2f size)
@@ -124,7 +126,7 @@ protected:
       toBeChecked.erase(curr);
       visited.insert(curr);
 
-      std::cout << curr.x << " " << curr.y << '\n';
+      // std::cout << curr.x << " " << curr.y << '\n';
       for (const sf::Vector2i &offset : offsets) {
         sf::Vector2i neighbor = curr + offset;
         if (world.getTileAtIndex(neighbor)->type == Tilemap::Tile::solid) {
@@ -239,10 +241,16 @@ public:
         StatsContainer::stats.warmth = 0;
     }
 
+	if( movement != sf::Vector2f{0.f,0.f} ){
+		frame = 0;
+		float angle = ((movement).angle()+sf::degrees(45/2)).wrapUnsigned().asDegrees();
+		frame += (int)(angle / 45);
+	}
+
 	sf::Sprite sprite(texture);
     sprite.setPosition(position);
     sprite.setOrigin(sf::Vector2f(16.f, 48.f));
-    sprite.setTextureRect(sf::IntRect({0, 224}, {32, 64}));
+    sprite.setTextureRect(sf::IntRect({frame*32, 128}, {32, 64}));
     Entity::submitSprite(sprite);
 
     // sf::RectangleShape rect;
@@ -289,8 +297,8 @@ public:
       snowman.step(window, view, world, texture);
     }
   }
-  static inline float spawnInterval = 150;
-  static inline float delayTime = 300;
+  static inline float spawnInterval = 0;
+  static inline float delayTime = 0;
   static inline sf::Clock delay;
   static inline sf::Clock clock;
   static inline std::list<regularSnowman> all;
@@ -316,10 +324,17 @@ public:
         StatsContainer::stats.warmth = 0;
     }
 	
+	if( movement != sf::Vector2f{0.f,0.f} ){
+		frame = 0;
+		float angle = ((movement).angle()+sf::degrees(45/2)).wrapUnsigned().asDegrees();
+		frame += (int)(angle / 45);
+	}
+
 	sf::Sprite sprite(texture);
     sprite.setPosition(position);
+	sprite.setColor(sf::Color(255,255,255,128));
     sprite.setOrigin(sf::Vector2f(16.f, 48.f));
-    sprite.setTextureRect(sf::IntRect({0, 224}, {32, 64}));
+    sprite.setTextureRect(sf::IntRect({frame*32, 128}, {32, 64}));
     Entity::submitSprite(sprite);
 	
     // sf::RectangleShape rect;

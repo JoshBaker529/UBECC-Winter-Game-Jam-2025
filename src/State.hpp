@@ -17,6 +17,7 @@
 #include "Procedural.hpp"
 #include "Stats.hpp"
 #include "Tilemap.hpp"
+#include "Animal.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Color.hpp>
@@ -58,7 +59,7 @@ class MainState : public State {
 private:
   sf::RenderWindow window;
   sf::View view;
-  float zoom = 1.f;
+  float zoom = 0.5f;
   sf::View guiView;
   sf::Clock clock;
 
@@ -160,28 +161,33 @@ public:
     Controls::addButton(sf::Keyboard::Key::C);
     Controls::addButton(sf::Keyboard::Key::E);
     Controls::addButton(sf::Keyboard::Key::F);
+	
+    Controls::addButton(sf::Keyboard::Key::R);
 
     Controls::windowRelativeTo(window);
 
-    Noise::generate();
-    Procedural::generateLevel(background, frontTiles);
+    
 
-    Campfire::all.push_back(Campfire({100.f, 100.f}));
-    Plant::all.push_back(
-        Plant({1600.f + 50.f, 1600.f + 50.f}, Plant::Type::Tree));
-    Plant::all.push_back(
-        Plant({1600.f + 150.f, 1600.f + 50.f}, Plant::Type::DeadBush));
-    Plant::all.push_back(
-        Plant({1600.f + 250.f, 1600.f + 50.f}, Plant::Type::BerryBush));
-    Plant::all.push_back(
-        Plant({1600.f + 350.f, 1600.f + 50.f}, Plant::Type::Grass));
-    Plant::all.push_back(
-        Plant({1600.f + 450.f, 1600.f + 50.f}, Plant::Type::Carrot));
+    // Campfire::all.push_back(Campfire({100.f, 100.f}));
+    // Plant::all.push_back(
+        // Plant({1600.f + 50.f, 1600.f + 50.f}, Plant::Type::Tree));
+    // Plant::all.push_back(
+        // Plant({1600.f + 150.f, 1600.f + 50.f}, Plant::Type::DeadBush));
+    // Plant::all.push_back(
+        // Plant({1600.f + 250.f, 1600.f + 50.f}, Plant::Type::BerryBush));
+    // Plant::all.push_back(
+        // Plant({1600.f + 350.f, 1600.f + 50.f}, Plant::Type::Grass));
+    // Plant::all.push_back(
+        // Plant({1600.f + 450.f, 1600.f + 50.f}, Plant::Type::Carrot));
 
-    Player::all.push_back(Player({1600.f, 1600.f}));
-    Campfire::all.push_back(Campfire({100.f, 100.f}));
-    Plant::all.push_back(
-        Plant({1600.f + 50.f, 1600.f + 50.f}, Plant::Type::Grass));
+    
+    // // Campfire::all.push_back(Campfire({100.f, 100.f}));
+    // Plant::all.push_back(
+        // Plant({1600.f + 50.f, 1600.f + 50.f}, Plant::Type::Grass));
+		
+		Noise::generate();
+		Procedural::generateLevel(background, shadows, midTiles, frontTiles);
+		Player::all.push_back(Player({1600.f, 1600.f}));
   }
 
   void drawBackground() {
@@ -234,6 +240,28 @@ public:
         if (Controls::tapped(sf::Keyboard::Key::Escape)) {
           return new Pause(window, view, guiView);
         }
+		
+		if( Player::all.empty() && Controls::tapped(sf::Keyboard::Key::R)){
+			midTiles.clear();
+			frontTiles.clear();
+			background.clear();
+			shadows.clear();
+			
+			Noise::generate();
+			Procedural::generateLevel(background, shadows, midTiles, frontTiles);
+			Player::all.push_back(Player({1600.f, 1600.f}));
+			regularSnowman::all.clear();
+			ghostSnowman::all.clear();
+			Animal::all.clear();
+			Decor::all.clear();
+			Plant::all.clear();
+			Campfire::all.clear();
+			Pickup::all.clear();
+			
+			StatsContainer::stats.health = StatsContainer::stats.max_health; 
+			StatsContainer::stats.hunger = StatsContainer::stats.max_hunger; 
+			StatsContainer::stats.warmth = StatsContainer::stats.max_warmth; 
+		}
 
         window.clear(sf::Color::White);
         window.setView(view);
@@ -253,6 +281,8 @@ public:
         Entity::stepAll<Campfire>(Campfire::all, window, view, characterTexture,
                                   frontTiles);
         Entity::stepAll<Plant>(Plant::all, window, view, characterTexture,
+                               frontTiles);       
+		Entity::stepAll<Animal>(Animal::all, window, view, characterTexture,
                                frontTiles);
 
         // Make Snow
@@ -267,6 +297,8 @@ public:
         // Object draw()'s here
         Entity::drawAll(window);
         Particles::draw(window, midTiles);
+
+		Item hb = Player::inventory.getHotbarItem();
 
         // If the player is alive, do block stuffs
         if (Player::all.size() > 0) {
@@ -299,7 +331,7 @@ public:
             window.draw(blockCursor);
           }
 
-          Item hb = Player::inventory.getHotbarItem();
+          
 
           if (inRange && Controls::tapped(sf::Mouse::Button::Left)) {
             if (midTiles.getTile(mousePosition)->type !=
@@ -387,6 +419,13 @@ public:
               Controls::tapped(sf::Keyboard::Key::C)) {
           }
         }
+		
+		if( Controls::tapped(sf::Mouse::Button::Right) ){
+			if (hb.getActionFunction()) {
+				hb.useActionFunction();
+				Player::inventory.decHotbarItem();
+			  }
+		}
 
         regularSnowman::stepAll(window, view, midTiles, characterTexture);
         ghostSnowman::stepAll(window, view, midTiles, characterTexture);

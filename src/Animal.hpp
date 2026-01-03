@@ -21,7 +21,7 @@ public:
     clock.start();
   }
 
-  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world) {
+  void step(sf::RenderWindow &window, sf::View &view, sf::Texture &texture, Tilemap &world) {
 
     if (rand() % 100 == 1) {
       turn = -turn;
@@ -56,18 +56,24 @@ public:
       move(world);
     }
 
-    sf::RectangleShape rect;
-    rect.setPosition(getBoundingBox().position);
-    rect.setSize(getBoundingBox().size);
-    rect.setFillColor(sf::Color::Blue);
+    // sf::RectangleShape rect;
+    // rect.setPosition(getBoundingBox().position);
+    // rect.setSize(getBoundingBox().size);
+    // rect.setFillColor(sf::Color::Blue);
 
-    sf::RectangleShape rect2;
-    rect2.setPosition(target * 100.f + getBoundingBox().position);
-    rect2.setSize({10, 10});
-    rect2.setFillColor(sf::Color::Green);
+    // sf::RectangleShape rect2;
+    // rect2.setPosition(target * 100.f + getBoundingBox().position);
+    // rect2.setSize({10, 10});
+    // rect2.setFillColor(sf::Color::Green);
+	
+	sf::Sprite sprite(texture);
+    sprite.setPosition(position);
+    sprite.setOrigin(sf::Vector2f(16.f, 48.f));
+    sprite.setTextureRect(sf::IntRect({0, 320}, {32, 64}));
+    Entity::submitSprite(sprite);
 
-    window.draw(rect);
-    window.draw(rect2);
+    // window.draw(rect);
+    // window.draw(rect2);
   }
   
   static inline std::list<Animal> all;
