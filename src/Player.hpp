@@ -101,6 +101,11 @@ public:
       StatsContainer::stats.health -= COLDDAMAGE * dt;
     }
     // Draw Code
+	int frame = 0;
+	sf::Vector2f cursor = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+	float angle = (position.angleTo(cursor)).wrapUnsigned().asDegrees();
+	cout << angle << endl;
+	
     sf::Sprite sprite(texture);
     sprite.setPosition(position);
     sprite.setOrigin(sf::Vector2f(16.f, 48.f));
