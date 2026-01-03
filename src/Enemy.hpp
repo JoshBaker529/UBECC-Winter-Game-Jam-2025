@@ -1,3 +1,5 @@
+#pragma once
+
 #include "DeltaTime.hpp"
 #include "Entity.hpp"
 #include "Player.hpp"
@@ -27,8 +29,12 @@ protected:
   float terminal;
   
   int frame = 0;
+  
 
 public:
+
+  float health = 100.f;
+
   Enemy(sf::Vector2f position, sf::Vector2f size)
       : Entity(position, size), body(sf::PrimitiveType::Lines, 8) {
 
@@ -54,7 +60,7 @@ public:
         body[4].color = body[5].color = body[6].color = body[7].color =
             sf::Color::Blue;
 
-    terminal = 1.f + randFloat(1, 3);
+    terminal = 1.f + randFloat(1, 2);
   }
 
   virtual void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
@@ -63,6 +69,10 @@ public:
   void setTarget(Entity &tar) { target = &tar; }
 
   void clearTarget() { target = nullptr; }
+
+	// bool collision(sf::FloatRect bb){
+        // return (boundingBox.findIntersection(bb) != std::nullopt);
+    // }
 
 protected:
   struct Vector2iHash {
@@ -135,7 +145,7 @@ protected:
 
         float tempGScore = gScore[curr] + dist(curr, neighbor);
 
-        if (tempGScore > 100)
+        if (tempGScore > 10)
           continue;
 
         if (gScore.count(neighbor) == 0 || tempGScore < gScore[neighbor]) {
@@ -168,7 +178,7 @@ protected:
   }
 };
 
-class regularSnowman : Enemy {
+class regularSnowman :public  Enemy {
 public:
   regularSnowman(sf::Vector2f position) : Enemy(position, {24, 24}) {}
   void step(sf::RenderWindow &window, sf::View &view, Tilemap &world, sf::Texture &texture) {
@@ -191,7 +201,7 @@ public:
         move(world);
 
       } else {
-        if (path.empty())
+        path.clear();
           aStar(world.worldToGridCoords(target->getPosition()), world);
 
         // temp.clear();
@@ -263,6 +273,9 @@ public:
 
   static void stepAll(sf::RenderWindow &window, sf::View &view,
                       Tilemap &world, sf::Texture &texture) {
+						  
+		list<typename list<regularSnowman>::iterator> deadThings;
+		
 
     const int MAXENEMIES = 10;
 
@@ -293,12 +306,15 @@ public:
       }
     }
 
-    for (regularSnowman &snowman : all) {
-      snowman.step(window, view, world, texture);
+    for (auto i = all.begin(); i != all.end(); i++) {
+      i->step(window, view, world, texture);
+	  if (i->dead) deadThings.push_back(i);
     }
+	for (auto i = deadThings.begin(); i != deadThings.end(); i++)
+			all.erase(*i);
   }
-  static inline float spawnInterval = 0;
-  static inline float delayTime = 0;
+  static inline float spawnInterval = 30;
+  static inline float delayTime = 100;
   static inline sf::Clock delay;
   static inline sf::Clock clock;
   static inline std::list<regularSnowman> all;
@@ -346,6 +362,8 @@ public:
 
   static void stepAll(sf::RenderWindow &window, sf::View &view,
                       Tilemap &world, sf::Texture &texture) {
+						  
+						  		list<typename list<ghostSnowman>::iterator> deadThings;
 
     const int MAXENEMIES = 10;
     const int SPAWNCHANCE = 200;
@@ -379,9 +397,13 @@ public:
       }
     }
 
-    for (ghostSnowman &snowman : all) {
-      snowman.step(window, view, world, texture);
+	for (auto i = all.begin(); i != all.end(); i++) {
+      i->step(window, view, world, texture);
+	  if (i->dead) deadThings.push_back(i);
     }
+	for (auto i = deadThings.begin(); i != deadThings.end(); i++)
+			all.erase(*i);
+	
   }
 
   static inline float spawnInterval = 150;

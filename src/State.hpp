@@ -18,6 +18,8 @@
 #include "Stats.hpp"
 #include "Tilemap.hpp"
 #include "Animal.hpp"
+#include "Sword.hpp"
+
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Color.hpp>
@@ -284,6 +286,8 @@ public:
                                frontTiles);       
 		Entity::stepAll<Animal>(Animal::all, window, view, characterTexture,
                                frontTiles);
+		Entity::stepAll<Sword>(Sword::all, window, view, itemTexture,
+                               frontTiles);
 
         // Make Snow
         Particles::snow(view);
@@ -331,7 +335,9 @@ public:
             window.draw(blockCursor);
           }
 
-          
+          if (Controls::tapped(sf::Mouse::Button::Left) && hb.getName() == "Sword" && Sword::all.empty()) {
+			  Sword::all.push_back( Sword() );
+		  }
 
           if (inRange && Controls::tapped(sf::Mouse::Button::Left)) {
             if (midTiles.getTile(mousePosition)->type !=
