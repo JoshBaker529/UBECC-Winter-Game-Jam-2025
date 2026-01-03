@@ -435,6 +435,7 @@ public:
 
         regularSnowman::stepAll(window, view, midTiles, characterTexture);
         ghostSnowman::stepAll(window, view, midTiles, characterTexture);
+        Animal::stepAll(window, view, midTiles, characterTexture);
 
         // Draw foreground stuff
         drawForeground();
