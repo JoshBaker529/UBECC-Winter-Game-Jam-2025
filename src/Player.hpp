@@ -104,7 +104,7 @@ public:
 	int frame = 0;
 	sf::Vector2f cursor = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 	float angle = (position.angleTo(cursor)).wrapUnsigned().asDegrees();
-	cout << angle << endl;
+	// cout << angle << endl;
 	
     sf::Sprite sprite(texture);
     sprite.setPosition(position);

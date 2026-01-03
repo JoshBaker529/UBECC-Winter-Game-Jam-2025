@@ -164,7 +164,7 @@ public:
     Controls::windowRelativeTo(window);
 
     Noise::generate();
-    Procedural::generateLevel(background, frontTiles);
+    Procedural::generateLevel(background, shadows, midTiles, frontTiles);
 
     Campfire::all.push_back(Campfire({100.f, 100.f}));
     Plant::all.push_back(
