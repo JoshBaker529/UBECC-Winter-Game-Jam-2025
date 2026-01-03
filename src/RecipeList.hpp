@@ -27,10 +27,6 @@ static std::vector<Recipe> recipes{
            Ingredients{std::pair("Stick", 3), std::pair("Stone", 3)}, 0},
     Recipe{ITEM("Pickaxe", 1),
            Ingredients{std::pair("Stick", 3), std::pair("Stone", 3)}, 0},
-    /*
-    Recipe{ITEM("Shovel", 1),
-           Ingredients{std::pair("Stick", 3), std::pair("Stone", 3)}, 0},
-           */
     Recipe{ITEM("Sword", 1),
            Ingredients{std::pair("Stick", 3), std::pair("Stone", 3)}, 0},
     Recipe{ITEM("Bowl", 1), Ingredients{std::pair("Stick", 8)}, 0},
