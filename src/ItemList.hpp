@@ -29,6 +29,9 @@
 // Function prototypes for any custom functions needed
 std::string soup_tooltip(Item *);
 std::string campfire_tooltip(Item *);
+std::string axe_tooltip(Item *item);
+std::string pickaxe_tooltip(Item *item);
+
 void consumable_action(Item *item);
 
 std::map<std::string, Item> ItemList{
@@ -64,9 +67,9 @@ std::map<std::string, Item> ItemList{
     ///    Tools
     ////////////////////////////////////////////////////////////////////////////////
     {"Axe", Item("Axe", TEXT(5, 0), 0, 1, 0, NOT_CONSUMABLE, NOT_EQUIPABLE,
-                 NULL, NULL)},
+                 NULL, axe_tooltip)},
     {"Pickaxe", Item("Pickaxe", TEXT(4, 0), 0, 1, 0, NOT_CONSUMABLE,
-                     NOT_EQUIPABLE, NULL, NULL)},
+                     NOT_EQUIPABLE, NULL, pickaxe_tooltip)},
     {"Shovel", Item("Shovel", TEXT(7, 0), 0, 1, 0, NOT_CONSUMABLE,
                     NOT_EQUIPABLE, NULL, NULL)},
     {"Sword", Item("Sword", TEXT(6, 0), 0, 1, 0, NOT_CONSUMABLE, NOT_EQUIPABLE,
@@ -148,5 +151,19 @@ std::string campfire_tooltip(Item *item) {
   ss << item->getName() << "\n"
      << "Will go out if exposed \nto the wind for too long.\n"
      << "Wind direction rotates \nslowly as time goes on.";
+  return ss.str();
+}
+
+std::string pickaxe_tooltip(Item *item) {
+  std::stringstream ss;
+  ss << item->getName() << "\n"
+     << "Can be used to break walls.";
+  return ss.str();
+}
+
+std::string axe_tooltip(Item *item) {
+  std::stringstream ss;
+  ss << item->getName() << "\n"
+     << "Can be used to break trees.";
   return ss.str();
 }

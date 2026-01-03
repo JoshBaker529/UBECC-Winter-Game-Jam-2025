@@ -519,11 +519,15 @@ int Inventory::getCraftingFromPosition(sf::Vector2i pos) {
       pos.x > CRAFTING_START.x + CRAFTING_ICON_WIDTH)
     return -1;
   if (pos.y < CRAFTING_START.y)
+
     return -1;
+
+  std::cout << std::endl;
+
   for (int i = 0; i < CRAFTING_RECIPES_SHOWN; i++) {
     int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
-    if (pos.y >= crafting_array[i].position.y &&
-        pos.y <= crafting_array[i + 2].position.y)
+    if (pos.y >= crafting_array[index].position.y &&
+        pos.y <= (crafting_array[index].position.y + CRAFTING_ICON_HEIGHT))
       return i;
   }
   return -1;
@@ -1166,7 +1170,22 @@ void Inventory::draw(sf::RenderWindow &window) {
 
   if (Controls::tapped(sf::Keyboard::Key::P)) {
     Item item = ItemList["Campfire"];
-    item.setQuantity(10);
+    item.setQuantity(1);
+    addItem(item);
+    item = ItemList["Pickaxe"];
+    item.setQuantity(1);
+    addItem(item);
+    item = ItemList["Axe"];
+    item.setQuantity(1);
+    addItem(item);
+    item = ItemList["Snowman Soup"];
+    item.setQuantity(1);
+    addItem(item);
+    item = ItemList["Stick"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Stone"];
+    item.setQuantity(50);
     addItem(item);
   }
 
