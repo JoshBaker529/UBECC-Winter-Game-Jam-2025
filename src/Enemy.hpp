@@ -231,6 +231,8 @@ public:
     window.draw(rect);
     // window.draw(temp);
   }
+  
+  static inline std::list<regularSnowman> all;
 };
 
 class ghostSnowman : public Enemy {
@@ -247,4 +249,6 @@ public:
     cap(terminal);
     move();
   }
+  
+  static inline std::list<ghostEnemy> all;
 };
