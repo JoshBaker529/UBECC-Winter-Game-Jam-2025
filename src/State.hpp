@@ -388,7 +388,8 @@ public:
           }
         }
 
-        ghostSnowman::stepAll(window, view, midTiles);
+        regularSnowman::stepAll(window, view, midTiles, characterTexture);
+        ghostSnowman::stepAll(window, view, midTiles, characterTexture);
 
         // Draw foreground stuff
         drawForeground();
@@ -411,9 +412,10 @@ public:
         Message::draw(window, guiView, font);
 
         sf::Text gameOverText(font);
+		gameOverText.setPosition( ((sf::Vector2f)window.getSize())/2.f );
         gameOverText.setFillColor(sf::Color::White);
         gameOverText.setOutlineColor(sf::Color::Black);
-        gameOverText.setString("GAME OVER - Press R to Respawn.");
+        gameOverText.setString("Chris got lost - Press R to Respawn.");
         gameOverText.setCharacterSize(30);
         gameOverText.setStyle(sf::Text::Bold);
         gameOverText.setOrigin(gameOverText.getLocalBounds().size / 2.f);

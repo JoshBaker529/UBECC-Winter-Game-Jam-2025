@@ -169,7 +169,7 @@ protected:
 class regularSnowman : Enemy {
 public:
   regularSnowman(sf::Vector2f position) : Enemy(position, {24, 24}) {}
-  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world) {
+  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world, sf::Texture &texture) {
     // static sf::VertexArray temp(sf::PrimitiveType::LineStrip);
 
     const float dt = DeltaTime::get();
@@ -239,16 +239,22 @@ public:
         StatsContainer::stats.warmth = 0;
     }
 
-    sf::RectangleShape rect;
-    rect.setPosition(getBoundingBox().position);
-    rect.setSize(getBoundingBox().size);
-    rect.setFillColor(sf::Color::Blue);
-    window.draw(rect);
+	sf::Sprite sprite(texture);
+    sprite.setPosition(position);
+    sprite.setOrigin(sf::Vector2f(16.f, 48.f));
+    sprite.setTextureRect(sf::IntRect({0, 224}, {32, 64}));
+    Entity::submitSprite(sprite);
+
+    // sf::RectangleShape rect;
+    // rect.setPosition(getBoundingBox().position);
+    // rect.setSize(getBoundingBox().size);
+    // rect.setFillColor(sf::Color::Blue);
+    // window.draw(rect);
     // window.draw(temp);
   }
 
   static void stepAll(sf::RenderWindow &window, sf::View &view,
-                      Tilemap &world) {
+                      Tilemap &world, sf::Texture &texture) {
 
     const int MAXENEMIES = 10;
 
@@ -280,11 +286,11 @@ public:
     }
 
     for (regularSnowman &snowman : all) {
-      snowman.step(window, view, world);
+      snowman.step(window, view, world, texture);
     }
   }
   static inline float spawnInterval = 150;
-  static inline float delayTime = 900;
+  static inline float delayTime = 300;
   static inline sf::Clock delay;
   static inline sf::Clock clock;
   static inline std::list<regularSnowman> all;
@@ -293,7 +299,7 @@ public:
 class ghostSnowman : public Enemy {
 public:
   ghostSnowman(sf::Vector2f position) : Enemy(position, {24, 24}) {}
-  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world) {
+  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world, sf::Texture &texture) {
 
     const float dt = DeltaTime::get();
     const float momentum = .5f * dt, friction = .25f * dt;
@@ -309,15 +315,22 @@ public:
       if (StatsContainer::stats.warmth < 0)
         StatsContainer::stats.warmth = 0;
     }
-    sf::RectangleShape rect;
-    rect.setPosition(getBoundingBox().position);
-    rect.setSize(getBoundingBox().size);
-    rect.setFillColor(sf::Color::Blue);
-    window.draw(rect);
+	
+	sf::Sprite sprite(texture);
+    sprite.setPosition(position);
+    sprite.setOrigin(sf::Vector2f(16.f, 48.f));
+    sprite.setTextureRect(sf::IntRect({0, 224}, {32, 64}));
+    Entity::submitSprite(sprite);
+	
+    // sf::RectangleShape rect;
+    // rect.setPosition(getBoundingBox().position);
+    // rect.setSize(getBoundingBox().size);
+    // rect.setFillColor(sf::Color::Blue);
+    // window.draw(rect);
   }
 
   static void stepAll(sf::RenderWindow &window, sf::View &view,
-                      Tilemap &world) {
+                      Tilemap &world, sf::Texture &texture) {
 
     const int MAXENEMIES = 10;
     const int SPAWNCHANCE = 200;
@@ -352,7 +365,7 @@ public:
     }
 
     for (ghostSnowman &snowman : all) {
-      snowman.step(window, view, world);
+      snowman.step(window, view, world, texture);
     }
   }
 

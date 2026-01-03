@@ -74,6 +74,18 @@ public:
         StatsContainer::stats.health = StatsContainer::stats.max_health;
       }
     }
+	
+	if( StatsContainer::stats.health < 0.f ) StatsContainer::stats.health = 0.f;
+	if( StatsContainer::stats.warmth < 0.f ) StatsContainer::stats.warmth = 0.f;
+	if( StatsContainer::stats.hunger < 0.f ) StatsContainer::stats.hunger = 0.f;
+	
+	if(StatsContainer::stats.health <= 0.f){
+		dead = true;
+	}
+	if(dead){
+		Decor::all.push_back( Decor( position, {32.f,32.f}, {32,32}, { {256,224}, {64,32} } ) );
+		return;
+	}
 
     // Move Camera
     view.move((position - view.getCenter()) / 1.f);
