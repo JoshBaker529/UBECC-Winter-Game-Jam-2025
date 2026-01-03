@@ -1,4 +1,6 @@
+#pragma once
 // This file holds everything involved with crafting;
+#pragma once
 
 #include "RecipeList.hpp" // Includes ItemList.hpp, Item.hpp
 #include <vector>

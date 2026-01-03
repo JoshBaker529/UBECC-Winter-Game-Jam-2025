@@ -1,5 +1,6 @@
+#pragma once
 // This class holds the framework for every item in the game
-
+#pragma once
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/System/Vector2.hpp"
 #include <cstdint>
@@ -8,6 +9,7 @@
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/System/Vector2.hpp"
 #include <cstdio>
+#include <iostream>
 #include <sstream>
 // Typedefs for the possible item types
 typedef uint8_t TypeFlags;
@@ -73,6 +75,8 @@ public:
   float getDefenseGained();
   float getColdResist();
   actionFunction getActionFunction();
+  void useActionFunction();
+  void setActionFunction(actionFunction);
   tooltipFunction getTooltipFunction();
   void setQuantity(int);
   void addQuantity(int);
@@ -85,8 +89,6 @@ public:
   Item &operator=(Item &&) = default;
   Item &operator=(const Item &) = default;
   ~Item();
-
-  uint32_t temp_color;
 };
 
 // Simple constructor
@@ -96,9 +98,7 @@ Item::Item(std::string name, sf::Vector2f texture, int quantity, int max_stack,
     : name(name), texture_position(texture), stack_size(quantity),
       max_stack_size(max_stack), type(type), hp_gained(0), hunger_gained(0),
       warmth_gained(0), defense(0), cold_resist(0), useAction(action),
-      tooltipHover(hover) {
-  temp_color = 0xEBBBBBFF;
-};
+      tooltipHover(hover) {};
 
 // Full constructor
 // Has a param for every member field
@@ -108,9 +108,7 @@ Item::Item(std::string name, sf::Vector2f texture, int quantity, int max_stack,
     : name(name), texture_position(texture), stack_size(quantity),
       max_stack_size(max_stack), type(type), hp_gained(hp),
       hunger_gained(hunger), warmth_gained(warmth), defense(def),
-      cold_resist(cold), useAction(action), tooltipHover(hover) {
-  temp_color = 0xEBBBBBFF;
-};
+      cold_resist(cold), useAction(action), tooltipHover(hover) {};
 
 // Sets the consumable stats (hp, hunger, and warmth gained)
 void Item::setConsumableStats(float hp, float hunger, float warmth) {
@@ -141,21 +139,14 @@ std::string Item::getTooltip() {
     ss << tooltipHover(this);
     return ss.str();
   }
-
-  ss << name << '\n' << stack_size << "/" << max_stack_size;
+  ss << name;
 
   if (type & CONSUMABLE)
     ss << "\nHP: " << hp_gained << "\nFood: " << hunger_gained
        << "\nWarmth: " << warmth_gained;
 
-  if (type & EQUIPABLE)
+  if ((type & EQUIPABLE) == EQUIPABLE)
     ss << "\nDefense: " << defense << "\nCold Resistance: " << cold_resist;
-
-  if (type & TOOL)
-    ss << "\nIt's a tool!";
-
-  if (type & BLOCK)
-    ss << "\nIt's a block!";
 
   return ss.str();
 }
@@ -193,6 +184,10 @@ float Item::getColdResist() { return cold_resist; }
 // Returns the pointer to the action function
 actionFunction Item::getActionFunction() { return useAction; }
 
+void Item::useActionFunction() { useAction(this); }
+
+void Item::setActionFunction(actionFunction func) { useAction = func; }
+
 // Returns the pointer to the tooltip function
 tooltipFunction Item::getTooltipFunction() { return tooltipHover; }
 
@@ -206,8 +201,8 @@ void Item::addQuantity(int qty) { stack_size += qty; }
 
 // Simple debug print to console
 void Item::debugPrint() {
-  printf("Name: %s, Texture: %f %f, Color: %x\n", name.c_str(),
-         texture_position.x, texture_position.y, temp_color);
+  printf("Name: %s, Texture: %f %f, Qty: %d\n", name.c_str(),
+         texture_position.x, texture_position.y, stack_size);
 }
 
 // Default constructor
@@ -216,9 +211,7 @@ Item::Item()
     : name(""), texture_position(sf::Vector2f{0, 0}), stack_size(0),
       max_stack_size(0), type(0), hp_gained(0), hunger_gained(0),
       warmth_gained(0), defense(0), cold_resist(0), useAction(0),
-      tooltipHover(0) {
-  temp_color = 0;
-}
+      tooltipHover(0) {}
 
 // Destructor, kinda useless
 Item::~Item() {
