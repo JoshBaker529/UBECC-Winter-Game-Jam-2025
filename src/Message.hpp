@@ -40,7 +40,8 @@ public:
 		text.setString(currentMessage);
 		
 		float textWid = text.getGlobalBounds().size.x;
-		text.setPosition( {-(textWid/2.f), 0.f} );
+		float hWindowW = window.getSize().x/2.f;
+		text.setPosition( {hWindowW-(textWid/2.f), 0.f} );
 		
 		window.draw(text);
 	}

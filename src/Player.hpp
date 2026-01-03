@@ -8,6 +8,7 @@
 #include "Particles.hpp"
 #include "Stats.hpp"
 #include "Tilemap.hpp"
+#include "Campfire.hpp"
 
 #include <list>
 using std::list;
@@ -42,6 +43,14 @@ public:
     bound();
 
     // Near a campfire
+	bool nearCampfire = false;
+	float nearDist = 128.f;
+	for(auto i = Campfire::all.begin(); i != Campfire::all.end(); i++){
+		if( (i->getPosition()-position).lengthSquared() <= pow(nearDist,2) ){
+			nearCampfire = true;
+			break;
+		}
+	}
 
     // Move Camera
     view.move((position - view.getCenter()) / 1.f);

@@ -260,6 +260,8 @@ public:
         windAngle += sf::degrees(0.05f * DeltaTime::get());
         Particles::setWindDirection(windAngle);
 
+		StatsContainer::stats.time += (1.f/60.f) * DeltaTime::get();
+
         drawBackground();
 
         // Object draw()'s here
@@ -324,11 +326,13 @@ public:
                 if (bb.contains(mousePosition)) {
                   switch (i->type) {
                   case Plant::Type::Tree:
-                    Particles::burst({mousePosition.x, mousePosition.y, 1.f},
-                                     sf::Color(115, 97, 75));
-                    for (int i = 0; i < 10; i++)
-                      Pickup::all.push_back(Pickup(mousePosition, "Stick"));
-                    i->kill();
+					if( hb.getName() == "Axe" ){
+						Particles::burst({mousePosition.x, mousePosition.y, 1.f},
+										 sf::Color(115, 97, 75));
+						for (int i = 0; i < 10; i++)
+						  Pickup::all.push_back(Pickup(mousePosition, "Stick"));
+						i->kill();
+					}
                     break;
                   case Plant::Type::DeadBush:
                     Particles::burst({mousePosition.x, mousePosition.y, 1.f},
