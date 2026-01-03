@@ -522,8 +522,6 @@ int Inventory::getCraftingFromPosition(sf::Vector2i pos) {
 
     return -1;
 
-  std::cout << std::endl;
-
   for (int i = 0; i < CRAFTING_RECIPES_SHOWN; i++) {
     int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
     if (pos.y >= crafting_array[index].position.y &&
@@ -550,8 +548,9 @@ Inventory::Inventory(sf::Vector2f vec) {
   Controls::addButton(sf::Keyboard::Key::Num5);
 
   if (DEBUG) {
-    Controls::addButton(sf::Keyboard::Key::I);
-    Controls::addButton(sf::Keyboard::Key::P);
+    Controls::addButton(sf::Keyboard::Key::I); // Debug print inventory
+    Controls::addButton(sf::Keyboard::Key::P); // Debug add items
+    Controls::addButton(sf::Keyboard::Key::L); // Debug set fire flag
   }
 
   // Don't ask why I have this as a param, and not a define like everything else
@@ -1168,23 +1167,48 @@ void Inventory::draw(sf::RenderWindow &window) {
     toggleOpen();
   }
 
+  if (Controls::tapped(sf::Keyboard::Key::L)) {
+    craftingFlagSetFire();
+  }
+
   if (Controls::tapped(sf::Keyboard::Key::P)) {
     Item item = ItemList["Campfire"];
     item.setQuantity(1);
-    addItem(item);
+    // addItem(item);
     item = ItemList["Pickaxe"];
     item.setQuantity(1);
     addItem(item);
     item = ItemList["Axe"];
     item.setQuantity(1);
     addItem(item);
-    item = ItemList["Snowman Soup"];
-    item.setQuantity(1);
-    addItem(item);
     item = ItemList["Stick"];
     item.setQuantity(50);
     addItem(item);
     item = ItemList["Stone"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Carrot"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Raw Meat"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Bowl"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Big Metal Pipe"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Fuel"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Ignition"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Hide"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Cooked Meat"];
     item.setQuantity(50);
     addItem(item);
   }
@@ -1309,7 +1333,32 @@ void Inventory::draw(sf::RenderWindow &window) {
           PlayerStats.cold_resist += equipment.getColdResist();
         }
       } else {
-        if (inventory[index].getName() == floating_item.getName()) {
+        if (index == -1) {
+          index = getCraftingFromPosition(mousePos);
+          if (index != -1) {
+            if (floating_item.getName() ==
+                craftable_list[index + crafting_position].output.getName()) {
+              int empty =
+                  floating_item.getMaxStack() - floating_item.getQuantity();
+              if (empty > craftable_list[index + crafting_position]
+                              .output.getQuantity()) {
+                floating_item.addQuantity(
+                    craftable_list[index + crafting_position]
+                        .output.getQuantity());
+                updateTextures(FLOATING_INDEX);
+                int end = craftable_list[index + crafting_position]
+                              .ingredients.size();
+                for (int i = 0; i < end; i++) {
+
+                  auto j =
+                      craftable_list[index + crafting_position].ingredients[i];
+                  // printInventory();
+                  removeItem(j.first, j.second);
+                }
+              }
+            }
+          }
+        } else if (inventory[index].getName() == floating_item.getName()) {
           // items are the same, add to stack
           int empty =
               inventory[index].getMaxStack() - inventory[index].getQuantity();
