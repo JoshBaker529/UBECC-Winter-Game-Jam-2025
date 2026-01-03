@@ -2,6 +2,8 @@
 #define PRODECURAL_HPP
 
 #include "Background.hpp"
+#include "Pickup.hpp"
+#include "Plant.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "Tilemap.hpp"
 #include "Utilities.hpp"
@@ -193,8 +195,14 @@ private:
   */
 
 public:
-  static void generateLevel(Background &background, Tilemap &tilemap) {
+  static void generateLevel(Background &background, Background &shadows,
+                            Tilemap &midTiles, Tilemap &frontTiles) {
+
     const sf::Vector2i levelSize = background.getSize();
+
+    // Stone
+    Tilemap::Tile stone;
+    stone.type = Tilemap::Tile::solid;
 
     /*
 
@@ -294,6 +302,7 @@ public:
       }
     }
 
+    int stone_count = 0;
     for (int x = 0; x < levelSize.x; x++) {
       for (int y = 0; y < levelSize.y; y++) {
 
@@ -397,9 +406,44 @@ public:
           break;
         }*/
         background.setTileAtIndex({x, y}, block);
+
+        float rand = randFloat(0.f, 100.f);
+        if (rand > 97.f && block != 4) {
+          stone_count++;
+          shadows.setTileAtIndex({x, y}, 1);
+          midTiles.addTileAtIndex({x, y}, stone);
+          frontTiles.addTileAtIndex({x, y}, stone);
+        } else if (rand < 3.f && block != 4) {
+          Plant::all.push_back(Plant(
+              {x * frontTiles.getTileSize().x, y * frontTiles.getTileSize().y},
+              Plant::Type::Tree));
+        } else if (rand > 30.f && rand < 33.f && block != 4) {
+          Plant::all.push_back(Plant(
+              {x * frontTiles.getTileSize().x, y * frontTiles.getTileSize().y},
+              Plant::Type::BerryBush));
+        } else if (rand > 60.f && rand < 63.f && block != 4) {
+          Plant::all.push_back(Plant(
+              {x * frontTiles.getTileSize().x, y * frontTiles.getTileSize().y},
+              Plant::Type::Grass));
+        } else if (rand > 80.f && rand < 80.5f && block != 4) {
+          Pickup p(
+              {x * frontTiles.getTileSize().x, y * frontTiles.getTileSize().y},
+              "Stone");
+          Pickup::all.push_back(p);
+
+        } else if (rand > 10.f && rand < 10.5f && block != 4) {
+          Pickup p(
+              {x * frontTiles.getTileSize().x, y * frontTiles.getTileSize().y},
+              "Stick");
+          Pickup::all.push_back(p);
+        }
       }
     }
     background.render();
+    shadows.render();
+    midTiles.render();
+    frontTiles.render();
+    frontTiles.autoTile();
   }
 
   // static void heightmap(Background &background, Tilemap &tilemap){

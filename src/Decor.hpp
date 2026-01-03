@@ -1,6 +1,7 @@
 #ifndef DECOR_HPP
 #define DECOR_HPP
 
+#include "Entity.hpp"
 #include <SFML/Graphics.hpp>
 
 class Decor: public Entity{
