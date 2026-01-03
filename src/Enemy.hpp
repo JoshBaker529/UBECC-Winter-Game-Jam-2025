@@ -14,7 +14,7 @@
 #include <unordered_set>
 
 class Enemy : public Entity {
-private:
+protected:
   std::list<sf::Vector2i> path;
   Entity *target = nullptr;
 
@@ -47,83 +47,14 @@ public:
             sf::Color::Blue;
   }
 
-  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
-            bool draw) {
-    static sf::VertexArray temp(sf::PrimitiveType::LineStrip);
-
-    const float DUMDDISTANCE = 100.f;
-    if (target != nullptr && draw) {
-
-      const float dt = DeltaTime::get();
-      const float momentum = .5f * dt, friction = .25f * dt, terminal = 4.f;
-
-      if (path.empty() &&
-          dist(world.worldToGridCoords(target->getPosition()),
-               world.worldToGridCoords(boundingBox.position)) > DUMDDISTANCE) {
-        sf::Vector2f distTo = target->getPosition() - position;
-        applyForce(distTo.normalized() * momentum);
-        applyResistance(friction);
-        cap(terminal);
-        move(world);
-
-      } else {
-        if (path.empty())
-          aStar(world.worldToGridCoords(target->getPosition()), world);
-
-        temp.clear();
-        if (!path.empty()) {
-          for (auto it = path.begin(); it != path.end(); ++it) {
-            sf::Vector2f cord = {
-                it->x * world.getTileSize().x + world.getTileSize().x / 2,
-                it->y * world.getTileSize().y + world.getTileSize().y / 2};
-            temp.append({cord, sf::Color::Green});
-          }
-
-          sf::Vector2f distTo =
-              sf::Vector2f{path.back().x * world.getTileSize().x +
-                               world.getTileSize().x / 2,
-                           path.back().y * world.getTileSize().y +
-                               world.getTileSize().y / 2} -
-              position;
-
-          if (distTo.length() < world.getTileSize().x) {
-            path.pop_back();
-          }
-
-          if (!path.empty()) {
-            sf::Vector2f distTo =
-                sf::Vector2f{path.back().x * world.getTileSize().x +
-                                 world.getTileSize().x / 2,
-                             path.back().y * world.getTileSize().y +
-                                 world.getTileSize().y / 2} -
-                position;
-
-            if (distTo != sf::Vector2f{0, 0}) {
-              applyForce(distTo.normalized() * momentum);
-              applyResistance(friction);
-              cap(terminal);
-
-              move(world);
-            }
-          }
-        }
-        // path.pop();
-      }
-    }
-
-    sf::RectangleShape rect;
-    rect.setPosition(getBoundingBox().position);
-    rect.setSize(getBoundingBox().size);
-    rect.setFillColor(sf::Color::Blue);
-    window.draw(rect);
-    window.draw(temp);
-  }
+  virtual void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
+                    bool draw) {}
 
   void setTarget(Entity &tar) { target = &tar; }
 
   void clearTarget() { target = nullptr; }
 
-private:
+protected:
   struct Vector2iHash {
     size_t operator()(const sf::Vector2i &in) const {
       size_t x = std::hash<int>()(in.x), y = std::hash<int>()(in.y);
@@ -224,5 +155,96 @@ private:
 
   float dist(const sf::Vector2i &p1, const sf::Vector2i &p2) {
     return pow(fabs(p1.x - p2.x), 2) + pow(fabs(p1.y - p2.y), 2);
+  }
+};
+
+class regularSnowman : Enemy {
+public:
+  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
+            bool draw) {
+    // static sf::VertexArray temp(sf::PrimitiveType::LineStrip);
+
+    const float DUMDDISTANCE = 100.f;
+    if (target != nullptr && draw) {
+
+      const float dt = DeltaTime::get();
+      const float momentum = .5f * dt, friction = .25f * dt, terminal = 4.f;
+
+      if (path.empty() &&
+          dist(world.worldToGridCoords(target->getPosition()),
+               world.worldToGridCoords(boundingBox.position)) > DUMDDISTANCE) {
+        sf::Vector2f distTo = target->getPosition() - position;
+        applyForce(distTo.normalized() * momentum);
+        applyResistance(friction);
+        cap(terminal);
+        move(world);
+
+      } else {
+        if (path.empty())
+          aStar(world.worldToGridCoords(target->getPosition()), world);
+
+        // temp.clear();
+        if (!path.empty()) {
+          // for (auto it = path.begin(); it != path.end(); ++it) {
+          // sf::Vector2f cord = {
+          // it->x * world.getTileSize().x + world.getTileSize().x / 2,
+          // it->y * world.getTileSize().y + world.getTileSize().y / 2};
+          // temp.append({cord, sf::Color::Green});
+          // }
+
+          sf::Vector2f distTo =
+              sf::Vector2f{path.back().x * world.getTileSize().x +
+                               world.getTileSize().x / 2,
+                           path.back().y * world.getTileSize().y +
+                               world.getTileSize().y / 2} -
+              position;
+
+          if (distTo.length() < world.getTileSize().x) {
+            path.pop_back();
+          }
+
+          if (!path.empty()) {
+            sf::Vector2f distTo =
+                sf::Vector2f{path.back().x * world.getTileSize().x +
+                                 world.getTileSize().x / 2,
+                             path.back().y * world.getTileSize().y +
+                                 world.getTileSize().y / 2} -
+                position;
+
+            if (distTo != sf::Vector2f{0, 0}) {
+              applyForce(distTo.normalized() * momentum);
+              applyResistance(friction);
+              cap(terminal);
+
+              move(world);
+            }
+          }
+        }
+        // path.pop();
+      }
+    }
+
+    sf::RectangleShape rect;
+    rect.setPosition(getBoundingBox().position);
+    rect.setSize(getBoundingBox().size);
+    rect.setFillColor(sf::Color::Blue);
+    window.draw(rect);
+    // window.draw(temp);
+  }
+};
+
+class ghostSnowman : public Enemy {
+public:
+  void step(sf::RenderWindow &window, sf::View &view, Tilemap &world,
+            bool draw) {
+
+    const float dt = DeltaTime::get();
+    const float momentum = .5f * dt, friction = .25f * dt, terminal = 4.f;
+
+    sf::Vector2f distTo = target->getPosition() - position;
+    applyForce(distTo.normalized() * momentum);
+    applyResistance(friction);
+    cap(terminal);
+    move();
   }
 };
