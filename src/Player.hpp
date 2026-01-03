@@ -5,6 +5,11 @@
 #include "DeltaTime.hpp"
 #include "Entity.hpp"
 #include "Tilemap.hpp"
+#include "Particles.hpp"
+#include "Inventory.hpp"
+
+#include<list>
+using std::list;
 
 class Entity;
 class Tilemap;
@@ -12,11 +17,11 @@ class Tilemap;
 class Player: public Entity{
 public:
 
-	Player(): Entity(sf::Vector2f(0,0), sf::Vector2f(31,31)) {}
+	Player(sf::Vector2f position): Entity(position, sf::Vector2f(24,24)) {}
 
-	virtual void step(sf::RenderWindow &window, sf::View &view, Tilemap &tilemap){
+	virtual void step(sf::RenderWindow &window, sf::View &view, sf::Texture &texture, Tilemap &tilemap){
 		const float dt = DeltaTime::get();
-		const float momentum = 0.5f*dt, friction = 0.25f*dt, terminal = 6.f;
+		const float momentum = 0.5f*dt, friction = 0.25f*dt, terminal = 4.f;
 		
 		// Input
 		sf::Vector2f input;
@@ -30,17 +35,34 @@ public:
 		cap(terminal);
 		move(tilemap);
 		
+		
+		// Near a campfire
+		
+		
+		
 		// Move Camera
 		view.move( (position-view.getCenter())/1.f );
 		window.setView(view);
 		
-		// Draw
-		sf::RectangleShape rect;
-		rect.setPosition( getBoundingBox().position );
-		rect.setSize( getBoundingBox().size );
-		rect.setFillColor( sf::Color::Red );
-		window.draw(rect);
+		// sf::RectangleShape r;
+		// r.setPosition(boundingBox.position);
+		// r.setSize(boundingBox.size);
+		// r.setFillColor(sf::Color::Red);
+		// window.draw(r);
+		
+		// Draw Code
+		sf::Sprite sprite(texture);
+		sprite.setPosition( position );
+		sprite.setOrigin( sf::Vector2f(16.f,48.f) );
+		sprite.setTextureRect( sf::IntRect( {0,224}, {32,64}) );
+		Entity::submitSprite(sprite);
+		
 	}
+	
+	static inline Inventory inventory;
+	
+	
+	static inline list<Player> all;
 };
 
 #endif
