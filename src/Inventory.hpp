@@ -612,8 +612,9 @@ int Inventory::getCraftingFromPosition(sf::Vector2i pos) {
   for (int i = 0; i < CRAFTING_RECIPES_SHOWN; i++) {
     int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
     if (pos.y >= crafting_array[index].position.y &&
-        pos.y <= (crafting_array[index].position.y + CRAFTING_ICON_HEIGHT))
+        pos.y <= (crafting_array[index].position.y + CRAFTING_ICON_HEIGHT)) {
       return i;
+    }
   }
   return -1;
 }
@@ -652,6 +653,7 @@ Inventory::Inventory() {
 
   for (int i = 0; i < SLOTS; i++) {
     slot_filled[i] = false;
+    inventory.at(i) = Item();
   }
   for (int i = 0; i < 8; i++) {
     flag_counts[i] = 0;
@@ -1064,17 +1066,21 @@ void Inventory::removeItem(int pos) {
 void Inventory::removeItem(std::string item, int qty) {
 
   for (int i = 0; i < SLOTS; i++) {
-    if (!slot_filled[i])
+    if (!slot_filled[i]) {
       continue;
-    if (inventory[i].getName() != item)
+    }
+    if (inventory[i].getName() != item) {
       continue;
+    }
     if (inventory[i].getQuantity() > qty) {
       inventory[i].addQuantity(-qty);
       item_quantities[item] -= qty;
       break;
     } else if (inventory[i].getQuantity() == qty) {
-      removeItem(i);
-      break;
+      {
+        removeItem(i);
+        break;
+      }
     } else {
       qty -= inventory[i].getQuantity();
       removeItem(i);
@@ -1375,9 +1381,10 @@ void Inventory::draw(sf::RenderWindow &window) {
         moving = true;
         updateTextures(FLOATING_INDEX);
         int end = craftable_list[index + crafting_position].ingredients.size();
+        auto list = craftable_list[index + crafting_position].ingredients;
         for (int i = 0; i < end; i++) {
 
-          auto j = craftable_list[index + crafting_position].ingredients[i];
+          auto j = list[i];
           // printInventory();
           removeItem(j.first, j.second);
         }
@@ -1418,10 +1425,11 @@ void Inventory::draw(sf::RenderWindow &window) {
                 updateTextures(FLOATING_INDEX);
                 int end = craftable_list[index + crafting_position]
                               .ingredients.size();
+                auto list =
+                    craftable_list[index + crafting_position].ingredients;
                 for (int i = 0; i < end; i++) {
 
-                  auto j =
-                      craftable_list[index + crafting_position].ingredients[i];
+                  auto j = list[i];
                   // printInventory();
                   removeItem(j.first, j.second);
                 }
