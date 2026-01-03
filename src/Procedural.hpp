@@ -203,6 +203,7 @@ public:
     // Stone
     Tilemap::Tile stone;
     stone.type = Tilemap::Tile::solid;
+	stone.vanity = sf::Vector2i(3, 2);
 
     /*
 
@@ -442,8 +443,9 @@ public:
     background.render();
     shadows.render();
     midTiles.render();
-    frontTiles.render();
     frontTiles.autoTile();
+	
+    frontTiles.render();
   }
 
   // static void heightmap(Background &background, Tilemap &tilemap){

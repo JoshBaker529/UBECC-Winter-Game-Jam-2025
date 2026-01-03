@@ -104,6 +104,15 @@ public:
       return;
     movement = movement.normalized() * terminal;
   }
+  
+  void bound(){
+		if(position.x < 0.f){ position.x = 0.f; movement.x = 0.f; }
+		if(position.y < 0.f){ position.y = 0.f; movement.y = 0.f; }
+		if(position.x > 3200.f){ position.x = 3200.f; movement.x = 0.f; }
+		if(position.y > 3200.f){ position.y = 3200.f; movement.y = 0.f; }
+		
+		recenterBoundingBox();
+  }
 
     bool collision(Entity &other){
         return (boundingBox.findIntersection(other.getBoundingBox()) != std::nullopt);

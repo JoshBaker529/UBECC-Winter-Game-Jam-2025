@@ -8,8 +8,11 @@ class Plant: public Decor{
 public:
 
 	enum Type{ Tree, BerryBush, DeadBush, Carrot, Grass };
+	Type type;
 
 	Plant(sf::Vector2f position, Type type): Decor(position) {
+		this->type = type;
+		
 		switch(type){
 			case Tree:
 				textureRect = { {0,0}, {64,96} };

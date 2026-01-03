@@ -39,8 +39,9 @@ public:
 		text.setOutlineThickness(2);
 		text.setString(currentMessage);
 		
-		float textWid = text.getGlobalBounds().size.x;		
-		text.setPosition( {-(textWid/2.f), -(view.getSize().y/2.f)} );
+		float textWid = text.getGlobalBounds().size.x;
+		float hWindowW = window.getSize().x/2.f;
+		text.setPosition( {hWindowW-(textWid/2.f), 0.f} );
 		
 		window.draw(text);
 	}

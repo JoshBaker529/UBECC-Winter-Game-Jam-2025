@@ -612,8 +612,9 @@ int Inventory::getCraftingFromPosition(sf::Vector2i pos) {
   for (int i = 0; i < CRAFTING_RECIPES_SHOWN; i++) {
     int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
     if (pos.y >= crafting_array[index].position.y &&
-        pos.y <= (crafting_array[index].position.y + CRAFTING_ICON_HEIGHT))
+        pos.y <= (crafting_array[index].position.y + CRAFTING_ICON_HEIGHT)) {
       return i;
+    }
   }
   return -1;
 }
@@ -652,6 +653,7 @@ Inventory::Inventory() {
 
   for (int i = 0; i < SLOTS; i++) {
     slot_filled[i] = false;
+    inventory.at(i) = Item();
   }
   for (int i = 0; i < 8; i++) {
     flag_counts[i] = 0;
@@ -737,6 +739,20 @@ Inventory::Inventory() {
     x += slot_width;
   }
 
+  // Textures
+  for (int i = 0; i < 5; i++) {
+    int index = i * 6 + 6;
+    sf::Vector2f UpLeft((32 * i), 32), UpRight((32 * (i + 1)), 32),
+        DownLeft((32 * i), 64), DownRight((32 * (i + 1)), 64);
+
+    array[index + 0].texCoords = UpLeft;
+    array[index + 1].texCoords = UpRight;
+    array[index + 2].texCoords = DownRight;
+    array[index + 3].texCoords = DownRight;
+    array[index + 4].texCoords = DownLeft;
+    array[index + 5].texCoords = UpLeft;
+  }
+
   x = start.x;
   y = start.y;
   // Item Layer
@@ -799,6 +815,17 @@ Inventory::Inventory() {
 
   index += 6;
 
+  UpLeft = sf::Vector2f(160, 32);
+  UpRight = sf::Vector2f(192, 32);
+  DownLeft = sf::Vector2f(160, 64);
+  DownRight = sf::Vector2f(192, 64);
+
+  array[index + 0].texCoords = UpLeft;
+  array[index + 1].texCoords = UpRight;
+  array[index + 2].texCoords = DownRight;
+  array[index + 3].texCoords = DownRight;
+  array[index + 4].texCoords = DownLeft;
+  array[index + 5].texCoords = UpLeft;
   UpLeft = sf::Vector2f{x + border_width, y + border_height};
   UpRight = sf::Vector2f{x + SLOT_SIZE - border_width, y + border_height};
   DownLeft = sf::Vector2f{x + border_width, y + SLOT_SIZE - border_height};
@@ -943,7 +970,6 @@ Inventory::Inventory() {
   x = start.x;
   y = start.y;
 
-  UpLeft = sf::Vector2f{start.x, start.y};
   UpRight = sf::Vector2f{start.x + SLOT_SIZE, start.y};
   DownLeft = sf::Vector2f{start.x, start.y + SLOT_SIZE};
   DownRight = sf::Vector2f{start.x + SLOT_SIZE, start.y + SLOT_SIZE};
@@ -983,6 +1009,18 @@ Inventory::Inventory() {
     hotbar[index + 3].color = sf::Color(SLOT_COLOR);
     hotbar[index + 4].color = sf::Color(SLOT_COLOR);
     hotbar[index + 5].color = sf::Color(SLOT_COLOR);
+
+    UpLeft = sf::Vector2f((32 * slot), 32);
+    UpRight = sf::Vector2f((32 * (slot + 1)), 32);
+    DownLeft = sf::Vector2f((32 * slot), 64);
+    DownRight = sf::Vector2f((32 * (slot + 1)), 64);
+
+    hotbar[index + 0].texCoords = UpLeft;
+    hotbar[index + 1].texCoords = UpRight;
+    hotbar[index + 2].texCoords = DownRight;
+    hotbar[index + 3].texCoords = DownRight;
+    hotbar[index + 4].texCoords = DownLeft;
+    hotbar[index + 5].texCoords = UpLeft;
     x += SLOT_SIZE;
   }
 
@@ -1064,17 +1102,21 @@ void Inventory::removeItem(int pos) {
 void Inventory::removeItem(std::string item, int qty) {
 
   for (int i = 0; i < SLOTS; i++) {
-    if (!slot_filled[i])
+    if (!slot_filled[i]) {
       continue;
-    if (inventory[i].getName() != item)
+    }
+    if (inventory[i].getName() != item) {
       continue;
+    }
     if (inventory[i].getQuantity() > qty) {
       inventory[i].addQuantity(-qty);
       item_quantities[item] -= qty;
       break;
     } else if (inventory[i].getQuantity() == qty) {
-      removeItem(i);
-      break;
+      {
+        removeItem(i);
+        break;
+      }
     } else {
       qty -= inventory[i].getQuantity();
       removeItem(i);
@@ -1375,9 +1417,10 @@ void Inventory::draw(sf::RenderWindow &window) {
         moving = true;
         updateTextures(FLOATING_INDEX);
         int end = craftable_list[index + crafting_position].ingredients.size();
+        auto list = craftable_list[index + crafting_position].ingredients;
         for (int i = 0; i < end; i++) {
 
-          auto j = craftable_list[index + crafting_position].ingredients[i];
+          auto j = list[i];
           // printInventory();
           removeItem(j.first, j.second);
         }
@@ -1418,10 +1461,11 @@ void Inventory::draw(sf::RenderWindow &window) {
                 updateTextures(FLOATING_INDEX);
                 int end = craftable_list[index + crafting_position]
                               .ingredients.size();
+                auto list =
+                    craftable_list[index + crafting_position].ingredients;
                 for (int i = 0; i < end; i++) {
 
-                  auto j =
-                      craftable_list[index + crafting_position].ingredients[i];
+                  auto j = list[i];
                   // printInventory();
                   removeItem(j.first, j.second);
                 }

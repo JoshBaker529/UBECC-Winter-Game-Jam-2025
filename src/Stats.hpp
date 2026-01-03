@@ -21,9 +21,9 @@ constexpr sf::Vector2f STATS_START(10.f, 10.f);
 constexpr float BAR_HEIGHT = 30.f;
 constexpr float BUFFER = 20.f;
 constexpr float BAR_WIDTH = (375.f / 3.f);
-constexpr float ONE_PERCENT = BAR_WIDTH / 100.f;
 constexpr unsigned BACKGROUND_COLOR = 0x404040FF;
 constexpr float BORDER = 5.f;
+constexpr float ONE_PERCENT = (BAR_WIDTH - (2 * BORDER)) / 100.f;
 constexpr unsigned BAR_COLORS[]{0xFF4444FF, 0x44FF44FF, 0x4444FFFF};
 
 static sf::Font font_IDK("res/tuffy.ttf");
