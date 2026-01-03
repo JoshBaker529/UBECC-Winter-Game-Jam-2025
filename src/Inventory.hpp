@@ -1,9 +1,10 @@
+#pragma once
 // This file holds the structure for the inventory menu
 // As of right now, it does not save what the inventory is
-
 #include "Controls.hpp"
 #include "Crafting.hpp" // Include Item.hpp and ItemList.hpp
 
+#include "ItemList.hpp"
 #include "SFML/Graphics/Color.hpp"
 #include "SFML/Graphics/Font.hpp"
 #include "SFML/Graphics/PrimitiveType.hpp"
@@ -16,6 +17,7 @@
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <array>
+#include <bitset>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -53,6 +55,7 @@
 #define TEXT_FILL 0xFFFFFFFF
 #define TEXT_OUTLINE_COLOR 0x000000FF
 #define TOOLTOP_BACKGROUND_COLOR 0x202080FF
+#define HIGHLIGHT_COLOR 0x7070E0FF
 
 // Text
 #define TEXT_OUTLINE_SIZE 0.5f
@@ -77,12 +80,12 @@
 #define EQUIPMENT_INDEX (-2)
 
 // Crafting constants
-#define CRAFTING_ICON_WIDTH 70.f
-#define CRAFTING_ICON_HEIGHT 70.f
-#define CRAFTING_INGREDIENT_WIDTH 50.f
-#define CRAFTING_INGREDIENT_HEIGHT 50.f
+#define CRAFTING_ICON_WIDTH 50.f
+#define CRAFTING_ICON_HEIGHT 50.f
+#define CRAFTING_INGREDIENT_WIDTH 30.f
+#define CRAFTING_INGREDIENT_HEIGHT 30.f
 #define CRAFTING_RECIPES_SHOWN 10
-#define CRAFTING_START (sf::Vector2f{start.x, start.y + HEIGHT + 25.f})
+#define CRAFTING_START (sf::Vector2f{start.x, start.y + HEIGHT + 35.f})
 #define CRAFTING_INDEX(i) (i * (crafting.getMaxIngredients() + 1) * 6)
 
 // Crafting flag array positions
@@ -94,6 +97,8 @@
 #define CRAFTING_FLAG_EMPTY4_INDEX 5
 #define CRAFTING_FLAG_EMPTY5_INDEX 6
 #define CRAFTING_FLAG_EMPTY6_INDEX 7
+
+#define DEBUG true
 
 // Variables to hold where the starting positions are for moving an item
 
@@ -128,6 +133,9 @@ private:
   Crafting crafting;
   CraftingFlags crafting_flags;
 
+  int hotbar_position;
+  int max_ingredients;
+
   std::vector<Recipe> craftable_list;
   int crafting_position;
 
@@ -142,7 +150,7 @@ private:
   // void DrawCrafting(sf::RenderWindow);
 
 public:
-  Inventory(sf::Vector2f);
+  Inventory();
   ~Inventory();
   bool isOpen();
   void toggleOpen();
@@ -151,20 +159,26 @@ public:
   void removeItem(int);
   void removeItem(std::string, int);
   void addItem(Item);
+  int getHotbarPosition();
+  Item getHotbarItem();
+  void decHotbarItem();
+  void moveHotbarRight();
+  void moveHotbarLeft();
+  void setHotbarPosition(int);
 
   void setCraftingFlags(CraftingFlags);
-  void craftingFlagSetFire();
-  void craftingFlagSetBench();
-  void craftingFlagClearFire();
-  void craftingFlagClearBench();
+  void craftingFlagSetFire(bool);
 
   void printCrafting();
   void printInventory();
 
   void draw(sf::RenderWindow &);
   void drawCrafting(sf::RenderWindow &);
+
+  // static inline Inventory inventory;
 };
 
+// static Inventory inventory(sf::Vector2f{0, 0});
 ////////////////////////////////////////////////////////////////////////////////
 // Private Methods
 ////////////////////////////////////////////////////////////////////////////////
@@ -348,7 +362,7 @@ void Inventory::updateTextures(int index) {
     array[vector_index + 5].color = sf::Color(0xFFFFFFFF);
 
     if (index < HOTBAR_SLOTS) {
-      vector_index = (HOTBAR_SLOTS + 1) * VERTICES_PER_SQUARE +
+      vector_index = (HOTBAR_SLOTS + 2) * VERTICES_PER_SQUARE +
                      index * VERTICES_PER_SQUARE;
 
       hotbar[vector_index + 0].texCoords = UpLeft;
@@ -393,7 +407,7 @@ void Inventory::updateTextures(int index) {
     array[vector_index + 4].color = sf::Color(TRANSPARENT);
     array[vector_index + 5].color = sf::Color(TRANSPARENT);
     if (index < HOTBAR_SLOTS) {
-      vector_index = (HOTBAR_SLOTS + 1) * VERTICES_PER_SQUARE +
+      vector_index = (HOTBAR_SLOTS + 2) * VERTICES_PER_SQUARE +
                      index * VERTICES_PER_SQUARE;
 
       hotbar[vector_index + 0].color = sf::Color(TRANSPARENT);
@@ -414,6 +428,94 @@ void Inventory::initItemQuantities() {
 }
 
 void Inventory::updateCraftableList() {
+  crafting.calclulateMaxIngredients();
+  if (max_ingredients < crafting.getMaxIngredients()) {
+    max_ingredients = crafting.getMaxIngredients();
+
+    crafting_array = sf::VertexArray(
+        sf::PrimitiveType::Triangles,
+        (CRAFTING_RECIPES_SHOWN * (crafting.getMaxIngredients() + 1)) *
+            VERTICES_PER_SQUARE);
+
+    float start_x = CRAFTING_START.x;
+    float start_y = CRAFTING_START.y;
+
+    for (int recipe = 0; recipe < CRAFTING_RECIPES_SHOWN; recipe++) {
+      float x = start_x;
+      float y = start_y;
+      float slot_width = CRAFTING_ICON_WIDTH;
+      float slot_height = CRAFTING_ICON_HEIGHT;
+
+      float border_width = slot_width * .05;
+      float border_height = slot_height * .05;
+
+      sf::Vector2f UpLeft(x + border_width, y + border_height),
+          UpRight(x + slot_width - border_width, y + border_height),
+          DownLeft(x + border_width, y + slot_height - border_height),
+          DownRight(x + slot_width - border_width,
+                    y + slot_width - border_height);
+
+      // Just trust me, this is correct
+      int index =
+          (recipe * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1)));
+
+      crafting_array[index + 0].position = UpLeft;
+      crafting_array[index + 1].position = UpRight;
+      crafting_array[index + 2].position = DownRight;
+      crafting_array[index + 3].position = DownRight;
+      crafting_array[index + 4].position = DownLeft;
+      crafting_array[index + 5].position = UpLeft;
+
+      crafting_array[index + 0].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 1].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 2].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 3].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 4].color = sf::Color(TRANSPARENT);
+      crafting_array[index + 5].color = sf::Color(TRANSPARENT);
+
+      // Prepare for the smaller icons
+      border_width = CRAFTING_INGREDIENT_WIDTH * .05;
+      border_height = CRAFTING_INGREDIENT_HEIGHT * .05;
+
+      UpLeft = sf::Vector2f(
+          start_x + CRAFTING_ICON_WIDTH,
+          start_y + ((CRAFTING_ICON_HEIGHT - CRAFTING_INGREDIENT_HEIGHT) / 2) +
+              border_height);
+      UpRight =
+          UpLeft + sf::Vector2f{CRAFTING_INGREDIENT_WIDTH - border_width, 0};
+      DownLeft =
+          UpLeft + sf::Vector2f{0, CRAFTING_INGREDIENT_HEIGHT - border_height};
+      DownRight =
+          DownLeft + sf::Vector2f{CRAFTING_INGREDIENT_WIDTH - border_width, 0};
+
+      for (int ingredient = 0; ingredient < crafting.getMaxIngredients();
+           ingredient++) {
+        index += 6;
+
+        crafting_array[index + 0].position = UpLeft;
+        crafting_array[index + 1].position = UpRight;
+        crafting_array[index + 2].position = DownRight;
+        crafting_array[index + 3].position = DownRight;
+        crafting_array[index + 4].position = DownLeft;
+        crafting_array[index + 5].position = UpLeft;
+
+        crafting_array[index + 0].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 1].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 2].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 3].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 4].color = sf::Color(TRANSPARENT);
+        crafting_array[index + 5].color = sf::Color(TRANSPARENT);
+
+        UpLeft += sf::Vector2f{CRAFTING_INGREDIENT_WIDTH, 0};
+        UpRight += sf::Vector2f{CRAFTING_INGREDIENT_WIDTH, 0};
+        DownLeft += sf::Vector2f{CRAFTING_INGREDIENT_WIDTH, 0};
+        DownRight += sf::Vector2f{CRAFTING_INGREDIENT_WIDTH, 0};
+      }
+
+      start_y += CRAFTING_ICON_HEIGHT;
+    }
+  }
+
   craftable_list = crafting.getCraftable(item_quantities, crafting_flags);
   int i;
   for (i = 0; i < craftable_list.size(); i++) {
@@ -504,11 +606,13 @@ int Inventory::getCraftingFromPosition(sf::Vector2i pos) {
       pos.x > CRAFTING_START.x + CRAFTING_ICON_WIDTH)
     return -1;
   if (pos.y < CRAFTING_START.y)
+
     return -1;
+
   for (int i = 0; i < CRAFTING_RECIPES_SHOWN; i++) {
     int index = i * (VERTICES_PER_SQUARE * (crafting.getMaxIngredients() + 1));
-    if (pos.y >= crafting_array[i].position.y &&
-        pos.y <= crafting_array[i + 2].position.y)
+    if (pos.y >= crafting_array[index].position.y &&
+        pos.y <= (crafting_array[index].position.y + CRAFTING_ICON_HEIGHT))
       return i;
   }
   return -1;
@@ -519,7 +623,25 @@ int Inventory::getCraftingFromPosition(sf::Vector2i pos) {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Constructor
-Inventory::Inventory(sf::Vector2f vec) {
+Inventory::Inventory() {
+
+  sf::Vector2f vec(10.f, 50.f);
+
+  // Init buttons needed
+  Controls::addButton(sf::Keyboard::Key::E);
+  Controls::addButton(sf::Keyboard::Key::F);
+  Controls::addButton(sf::Keyboard::Key::Num1);
+  Controls::addButton(sf::Keyboard::Key::Num2);
+  Controls::addButton(sf::Keyboard::Key::Num3);
+  Controls::addButton(sf::Keyboard::Key::Num4);
+  Controls::addButton(sf::Keyboard::Key::Num5);
+
+  if (DEBUG) {
+    Controls::addButton(sf::Keyboard::Key::I); // Debug print inventory
+    Controls::addButton(sf::Keyboard::Key::P); // Debug add items
+    Controls::addButton(sf::Keyboard::Key::L); // Debug set fire flag
+  }
+
   // Don't ask why I have this as a param, and not a define like everything else
   start = vec;
 
@@ -538,6 +660,7 @@ Inventory::Inventory(sf::Vector2f vec) {
   open = false;
   crafting_flags = 0;
   crafting_position = 0;
+  hotbar_position = 0;
   floating_item = Item();
   equipment = Item();
 
@@ -713,6 +836,8 @@ Inventory::Inventory(sf::Vector2f vec) {
   // CRAFTING_RECIPES_SHOWN   -- Number of recipes shown
   // * maxIngredients + 1     -- Number of items per crafting recipe
   //                          -- number of the ingredients + 1 for the result
+  max_ingredients = crafting.getMaxIngredients();
+
   crafting_array = sf::VertexArray(
       sf::PrimitiveType::Triangles,
       (CRAFTING_RECIPES_SHOWN * (crafting.getMaxIngredients() + 1)) *
@@ -796,7 +921,7 @@ Inventory::Inventory(sf::Vector2f vec) {
     start_y += CRAFTING_ICON_HEIGHT;
   }
   hotbar = sf::VertexArray(sf::PrimitiveType::Triangles,
-                           ((HOTBAR_SLOTS * 2) + 1) * VERTICES_PER_SQUARE);
+                           ((HOTBAR_SLOTS * 2) + 2) * VERTICES_PER_SQUARE);
 
   UpLeft = sf::Vector2f{start.x, start.y};
   UpRight = sf::Vector2f{start.x + WIDTH, start.y};
@@ -818,9 +943,27 @@ Inventory::Inventory(sf::Vector2f vec) {
   x = start.x;
   y = start.y;
 
+  UpLeft = sf::Vector2f{start.x, start.y};
+  UpRight = sf::Vector2f{start.x + SLOT_SIZE, start.y};
+  DownLeft = sf::Vector2f{start.x, start.y + SLOT_SIZE};
+  DownRight = sf::Vector2f{start.x + SLOT_SIZE, start.y + SLOT_SIZE};
+
+  hotbar[6 + 0].position = UpLeft;
+  hotbar[6 + 1].position = UpRight;
+  hotbar[6 + 2].position = DownRight;
+  hotbar[6 + 3].position = DownRight;
+  hotbar[6 + 4].position = DownLeft;
+  hotbar[6 + 5].position = UpLeft;
+  hotbar[6 + 0].color = sf::Color(HIGHLIGHT_COLOR);
+  hotbar[6 + 1].color = sf::Color(HIGHLIGHT_COLOR);
+  hotbar[6 + 2].color = sf::Color(HIGHLIGHT_COLOR);
+  hotbar[6 + 3].color = sf::Color(HIGHLIGHT_COLOR);
+  hotbar[6 + 4].color = sf::Color(HIGHLIGHT_COLOR);
+  hotbar[6 + 5].color = sf::Color(HIGHLIGHT_COLOR);
+
   // BAckground
   for (int slot = 0; slot < HOTBAR_SLOTS; slot++) {
-    int index = (slot + 1) * VERTICES_PER_SQUARE;
+    int index = (slot + 2) * VERTICES_PER_SQUARE;
 
     sf::Vector2f UpLeft(x + border_width, y + border_height),
         UpRight(x + slot_width - border_width, y + border_height),
@@ -848,7 +991,7 @@ Inventory::Inventory(sf::Vector2f vec) {
   // Item
   for (int slot = 0; slot < HOTBAR_SLOTS; slot++) {
     int index =
-        (HOTBAR_SLOTS + 1) * VERTICES_PER_SQUARE + slot * VERTICES_PER_SQUARE;
+        (HOTBAR_SLOTS + 2) * VERTICES_PER_SQUARE + slot * VERTICES_PER_SQUARE;
 
     sf::Vector2f UpLeft(x + border_width, y + border_height),
         UpRight(x + slot_width - border_width, y + border_height),
@@ -974,40 +1117,85 @@ void Inventory::addItem(Item item) {
   }
 }
 
+int Inventory::getHotbarPosition() { return hotbar_position; }
+
+Item Inventory::getHotbarItem() { return inventory[hotbar_position]; }
+
+void Inventory::decHotbarItem() {
+  removeItem(inventory[hotbar_position].getName(), 1);
+}
+
+void Inventory::moveHotbarRight() {
+  hotbar_position++;
+  if (hotbar_position >= COLUMNS) {
+    hotbar_position = COLUMNS - 1;
+  }
+  sf::Vector2f UpLeft =
+      sf::Vector2f{start.x + (SLOT_SIZE * hotbar_position), start.y};
+  sf::Vector2f UpRight = UpLeft + sf::Vector2f{0, SLOT_SIZE};
+  sf::Vector2f DownLeft = UpLeft + sf::Vector2f{SLOT_SIZE, 0};
+  sf::Vector2f DownRight = UpLeft + sf::Vector2f{SLOT_SIZE, SLOT_SIZE};
+
+  hotbar[6 + 0].position = UpLeft;
+  hotbar[6 + 1].position = UpRight;
+  hotbar[6 + 2].position = DownRight;
+  hotbar[6 + 3].position = DownRight;
+  hotbar[6 + 4].position = DownLeft;
+  hotbar[6 + 5].position = UpLeft;
+}
+
+void Inventory::moveHotbarLeft() {
+  hotbar_position--;
+  if (hotbar_position <= 0) {
+    hotbar_position = 0;
+  }
+  sf::Vector2f UpLeft =
+      sf::Vector2f{start.x + (SLOT_SIZE * hotbar_position), start.y};
+  sf::Vector2f UpRight = UpLeft + sf::Vector2f{0, SLOT_SIZE};
+  sf::Vector2f DownLeft = UpLeft + sf::Vector2f{SLOT_SIZE, 0};
+  sf::Vector2f DownRight = UpLeft + sf::Vector2f{SLOT_SIZE, SLOT_SIZE};
+
+  hotbar[6 + 0].position = UpLeft;
+  hotbar[6 + 1].position = UpRight;
+  hotbar[6 + 2].position = DownRight;
+  hotbar[6 + 3].position = DownRight;
+  hotbar[6 + 4].position = DownLeft;
+  hotbar[6 + 5].position = UpLeft;
+}
+void Inventory::setHotbarPosition(int pos) {
+  if (pos >= COLUMNS)
+    hotbar_position = COLUMNS - 1;
+  else if (pos <= 0)
+    hotbar_position = 0;
+  else
+    hotbar_position = pos;
+
+  sf::Vector2f UpLeft =
+      sf::Vector2f{start.x + (SLOT_SIZE * hotbar_position), start.y};
+  sf::Vector2f UpRight = UpLeft + sf::Vector2f{0, SLOT_SIZE};
+  sf::Vector2f DownLeft = UpLeft + sf::Vector2f{SLOT_SIZE, 0};
+  sf::Vector2f DownRight = UpLeft + sf::Vector2f{SLOT_SIZE, SLOT_SIZE};
+
+  hotbar[6 + 0].position = UpLeft;
+  hotbar[6 + 1].position = UpRight;
+  hotbar[6 + 2].position = DownRight;
+  hotbar[6 + 3].position = DownRight;
+  hotbar[6 + 4].position = DownLeft;
+  hotbar[6 + 5].position = UpLeft;
+}
+
 // Sets the current crafting flags - shows what objects we're close to
 void Inventory::setCraftingFlags(CraftingFlags flags) {
   crafting_flags = flags;
   updateCraftableList();
 }
 
-void Inventory::craftingFlagSetFire() {
-  crafting_flags |= FIRE;
-  flag_counts[CRAFTING_FLAG_FIRE_INDEX]++;
-  updateCraftableList();
-}
-
-void Inventory::craftingFlagSetBench() {
-  crafting_flags |= CRAFTING_BENCH;
-  flag_counts[CRAFTING_FLAG_BENCH_INDEX]++;
-  updateCraftableList();
-}
-
-void Inventory::craftingFlagClearFire() {
-  if (--flag_counts[CRAFTING_FLAG_FIRE_INDEX] <= 0) {
-    // I don't want to be safe incase you call this and it's already 0;"
-    flag_counts[CRAFTING_FLAG_FIRE_INDEX] = 0;
-    crafting_flags &= (~FIRE);
+void Inventory::craftingFlagSetFire(bool b) {
+  if (b) {
+    crafting_flags |= FIRE;
+  } else {
+    crafting_flags &= ~FIRE;
   }
-  updateCraftableList();
-}
-
-void Inventory::craftingFlagClearBench() {
-  if (--flag_counts[CRAFTING_FLAG_BENCH_INDEX] <= 0) {
-    // I don't want to be safe incase you call this and it's already 0;
-    flag_counts[CRAFTING_FLAG_BENCH_INDEX] = 0;
-    crafting_flags &= (~CRAFTING_BENCH);
-  }
-  updateCraftableList();
 }
 
 // Debug printing to console the craftable items given current item quantities
@@ -1041,11 +1229,84 @@ void Inventory::printInventory() {
 
 // Draws the inventory
 void Inventory::draw(sf::RenderWindow &window) {
+
   sf::Vector2i mousePos = Controls::mousePosition();
 
-  // Hotbar
+  if (Controls::tapped(sf::Keyboard::Key::E)) {
+    toggleOpen();
+  }
 
+  if (Controls::tapped(sf::Keyboard::Key::L)) {
+    craftingFlagSetFire(true);
+  }
+
+  if (Controls::tapped(sf::Keyboard::Key::P)) {
+    Item item = ItemList["Campfire"];
+    item.setQuantity(1);
+    // addItem(item);
+    item = ItemList["Pickaxe"];
+    item.setQuantity(1);
+    addItem(item);
+    item = ItemList["Axe"];
+    item.setQuantity(1);
+    addItem(item);
+    item = ItemList["Stick"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Stone"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Carrot"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Raw Meat"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Bowl"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Big Metal Pipe"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Fuel"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Ignition"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Hide"];
+    item.setQuantity(50);
+    addItem(item);
+    item = ItemList["Cooked Meat"];
+    item.setQuantity(50);
+    addItem(item);
+  }
+
+  if (Controls::tapped(sf::Keyboard::Key::I)) {
+    printInventory();
+  }
+
+  // Hotbar
   if (!open) {
+
+    // Use Function
+    if (Controls::tapped(sf::Keyboard::Key::F)) {
+      if (inventory[hotbar_position].getActionFunction()) {
+        inventory[hotbar_position].useActionFunction();
+        decHotbarItem();
+      }
+    } else if (Controls::tapped(sf::Keyboard::Key::Num1)) {
+      setHotbarPosition(0);
+    } else if (Controls::tapped(sf::Keyboard::Key::Num2)) {
+      setHotbarPosition(1);
+    } else if (Controls::tapped(sf::Keyboard::Key::Num3)) {
+      setHotbarPosition(2);
+    } else if (Controls::tapped(sf::Keyboard::Key::Num4)) {
+      setHotbarPosition(3);
+    } else if (Controls::tapped(sf::Keyboard::Key::Num5)) {
+      setHotbarPosition(4);
+    }
+
     window.draw(hotbar, &item_texture);
 
     for (int slot = 0; slot < HOTBAR_SLOTS; slot++) {
@@ -1095,9 +1356,10 @@ void Inventory::draw(sf::RenderWindow &window) {
         equipment = Item();
         updateTextures(FLOATING_INDEX);
         updateTextures(EQUIPMENT_INDEX);
-        PlayerStats.defense -= floating_item.getDefenseGained();
-        PlayerStats.cold_resist -= floating_item.getColdResist();
-        moving = true;
+        StatsContainer::stats.defense -= floating_item.getDefenseGained();
+        StatsContainer::stats.cold_resist -= floating_item.getColdResist();
+        if (floating_item.getName() != "")
+          moving = true;
       } else if (slot_filled[index]) {
         moving = true;
         if (index >= 0) {
@@ -1135,13 +1397,38 @@ void Inventory::draw(sf::RenderWindow &window) {
           updateTextures(FLOATING_INDEX);
           updateTextures(EQUIPMENT_INDEX);
 
-          PlayerStats.defense -= floating_item.getDefenseGained();
-          PlayerStats.cold_resist -= floating_item.getColdResist();
-          PlayerStats.defense += equipment.getDefenseGained();
-          PlayerStats.cold_resist += equipment.getColdResist();
+          StatsContainer::stats.defense -= floating_item.getDefenseGained();
+          StatsContainer::stats.cold_resist -= floating_item.getColdResist();
+          StatsContainer::stats.defense += equipment.getDefenseGained();
+          StatsContainer::stats.cold_resist += equipment.getColdResist();
         }
       } else {
-        if (inventory[index].getName() == floating_item.getName()) {
+        if (index == -1) {
+          index = getCraftingFromPosition(mousePos);
+          if (index != -1) {
+            if (floating_item.getName() ==
+                craftable_list[index + crafting_position].output.getName()) {
+              int empty =
+                  floating_item.getMaxStack() - floating_item.getQuantity();
+              if (empty > craftable_list[index + crafting_position]
+                              .output.getQuantity()) {
+                floating_item.addQuantity(
+                    craftable_list[index + crafting_position]
+                        .output.getQuantity());
+                updateTextures(FLOATING_INDEX);
+                int end = craftable_list[index + crafting_position]
+                              .ingredients.size();
+                for (int i = 0; i < end; i++) {
+
+                  auto j =
+                      craftable_list[index + crafting_position].ingredients[i];
+                  // printInventory();
+                  removeItem(j.first, j.second);
+                }
+              }
+            }
+          }
+        } else if (inventory[index].getName() == floating_item.getName()) {
           // items are the same, add to stack
           int empty =
               inventory[index].getMaxStack() - inventory[index].getQuantity();
@@ -1297,6 +1584,12 @@ void Inventory::draw(sf::RenderWindow &window) {
 }
 
 void Inventory::drawCrafting(sf::RenderWindow &window) {
+  sf::Text text(font, "Crafting: ");
+  text.setFillColor(sf::Color::Black);
+  text.setPosition(CRAFTING_START + sf::Vector2f{0.f, -30.f});
+  text.setStyle(sf::Text::Style::Bold);
+  window.draw(text);
+
   window.draw(crafting_array, &item_texture);
   float main_scale = (CRAFTING_ICON_WIDTH / SLOT_SIZE);
   float ingr_scale = (CRAFTING_INGREDIENT_WIDTH / SLOT_SIZE);
