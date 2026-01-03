@@ -2,20 +2,23 @@
 
 // This class holds all the information regarding the player stats
 
+#include "Controls.hpp"
 #include "SFML/Graphics/BlendMode.hpp"
 #include "SFML/Graphics/PrimitiveType.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/VertexArray.hpp"
 #include "SFML/System/Vector2.hpp"
+#include "SFML/Window/Keyboard.hpp"
 #include <iostream>
 
 // Starting position
-constexpr sf::Vector2f STATS_START(0.f, -384.f + 10.f);
+// constexpr sf::Vector2f STATS_START(0.f, -384.f + 10.f);
+constexpr sf::Vector2f STATS_START(0.f, 384.f + 10.f);
 // constexpr sf::Vector2f STATS_START(500.f, 500.f);
 constexpr float BAR_HEIGHT = 30.f;
 constexpr float BAR_WIDTH = 100.f;
 constexpr float BUFFER = 20.f;
-constexpr unsigned BACKGROUND_COLOR = 0x000000FF;
+constexpr unsigned BACKGROUND_COLOR = 0x404040FF;
 constexpr float BORDER = 5.f;
 constexpr unsigned BAR_COLORS[]{0xFF4444FF, 0x44FF44FF, 0x4444FFFF};
 
@@ -55,6 +58,9 @@ Stats::Stats()
     : old_health(100), old_hunger(100), old_warmth(100), max_health(100),
       max_hunger(100), max_warmth(100), health(100), hunger(100), warmth(100),
       defense(0), cold_resist(0), time(0) {
+
+  Controls::addButton(sf::Keyboard::Key::V);
+
   array = sf::VertexArray(sf::PrimitiveType::Triangles, 36);
   for (int i = 0; i < 3; i++) {
     sf::Vector2f UpLeft =
@@ -100,6 +106,12 @@ Stats::Stats()
 }
 
 void Stats::draw(sf::RenderWindow &window) {
+
+  if (Controls::tapped(sf::Keyboard::Key::V)) {
+    health -= 50;
+    hunger -= 50;
+    warmth -= 50;
+  }
 
   int index = 18;
   if (health != old_health) {

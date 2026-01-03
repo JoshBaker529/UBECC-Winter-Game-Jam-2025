@@ -75,6 +75,8 @@ public:
   float getDefenseGained();
   float getColdResist();
   actionFunction getActionFunction();
+  void useActionFunction();
+  void setActionFunction(actionFunction);
   tooltipFunction getTooltipFunction();
   void setQuantity(int);
   void addQuantity(int);
@@ -138,9 +140,6 @@ std::string Item::getTooltip() {
     return ss.str();
   }
   ss << name;
-  if (max_stack_size != 1) {
-    ss << '\n' << stack_size << "/" << max_stack_size;
-  }
 
   if (type & CONSUMABLE)
     ss << "\nHP: " << hp_gained << "\nFood: " << hunger_gained
@@ -148,12 +147,6 @@ std::string Item::getTooltip() {
 
   if ((type & EQUIPABLE) == EQUIPABLE)
     ss << "\nDefense: " << defense << "\nCold Resistance: " << cold_resist;
-
-  if (type & TOOL)
-    ss << "\nIt's a tool!";
-
-  if (type & BLOCK)
-    ss << "\nIt's a block!";
 
   return ss.str();
 }
@@ -190,6 +183,10 @@ float Item::getColdResist() { return cold_resist; }
 
 // Returns the pointer to the action function
 actionFunction Item::getActionFunction() { return useAction; }
+
+void Item::useActionFunction() { useAction(this); }
+
+void Item::setActionFunction(actionFunction func) { useAction = func; }
 
 // Returns the pointer to the tooltip function
 tooltipFunction Item::getTooltipFunction() { return tooltipHover; }
