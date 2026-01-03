@@ -1,5 +1,5 @@
 // The whole list of possible default items
-
+#pragma once
 #include "Item.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "Stats.hpp"

@@ -1,5 +1,5 @@
 // This class holds all the information regarding the player stats
-
+#pragma once
 #include <iostream>
 class Stats {
 public:

@@ -1,6 +1,6 @@
 // This file holds the structure for the inventory menu
 // As of right now, it does not save what the inventory is
-
+#pragma once
 #include "Controls.hpp"
 #include "Crafting.hpp" // Include Item.hpp and ItemList.hpp
 
@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <bitset>
 
 // TODO:
 // Need to work out what is needed for equipment/hotbar
