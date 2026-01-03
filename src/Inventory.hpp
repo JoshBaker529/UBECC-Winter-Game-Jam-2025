@@ -18,6 +18,7 @@
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <array>
+#include <bitset>
 #include <cstdint>
 #include <iostream>
 #include <string>
