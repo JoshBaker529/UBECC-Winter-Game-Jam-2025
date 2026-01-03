@@ -104,11 +104,6 @@ public:
 	
 	template<class T>
 	static void stepAll(list<T> &all, sf::RenderWindow &window, sf::View &view, sf::Texture &texture, Tilemap &tilemap){
-		// list<list<T>::iterator> deadOnes;
-		// for(auto i = all.begin(); i != all.end(); i++){
-			// i->step(window,view,texture,tilemap);
-			// if(i->dead) all.erase(i);
-		// }
 		list<typename list<T>::iterator> deadThings;
 		for (auto i = all.begin(); i != all.end(); i++) {
 			i->step(window,view,texture,tilemap);

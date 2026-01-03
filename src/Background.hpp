@@ -116,6 +116,10 @@ public:
 		window.draw(verts,&texture);
 	}
 	
+	void draw(sf::RenderWindow &window, sf::Shader &shader){
+		window.draw(verts,&shader);
+	}
+	
 };
 
 #endif

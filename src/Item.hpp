@@ -1,6 +1,6 @@
 #pragma once
 // This class holds the framework for every item in the game
-
+#pragma once
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/System/Vector2.hpp"
 #include <cstdint>

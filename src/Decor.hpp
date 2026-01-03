@@ -4,10 +4,15 @@
 #include <SFML/Graphics.hpp>
 
 class Decor: public Entity{
+protected:
 	sf::IntRect textureRect;
 	sf::Vector2f origin;
 	
 public:
+
+	Decor(sf::Vector2f position): Entity(position, sf::Vector2f(32.f,32.f)) {
+		this->position = position;
+	}
 
 	Decor(sf::Vector2f position, sf::Vector2f size, sf::Vector2f origin, sf::IntRect textureRect): Entity(position, size) {
 		this->position = position;

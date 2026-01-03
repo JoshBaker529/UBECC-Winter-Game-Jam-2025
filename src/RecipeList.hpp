@@ -1,5 +1,4 @@
 #pragma once
-
 #include "ItemList.hpp" // Includes Item
 #include <utility>
 #include <vector>

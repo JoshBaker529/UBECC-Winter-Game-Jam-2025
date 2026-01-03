@@ -5,13 +5,19 @@
 
 #include "Controls.hpp"
 #include "DeltaTime.hpp"
+#include "Stats.hpp"
 #include "Background.hpp"
 #include "Tilemap.hpp"
 #include "Entity.hpp"
 #include "Player.hpp"
 #include "Decor.hpp"
+#include "Pickup.hpp"
 #include "Procedural.hpp"
 #include "Particles.hpp"
+#include "Message.hpp"
+#include "Campfire.hpp"
+#include "Plant.hpp"
+#include "Inventory.hpp"
 
 #include <iostream>
 using std::cout;
@@ -21,10 +27,12 @@ int main(){
 
     sf::RenderWindow window(sf::VideoMode({ 1024, 768 }), "");
     window.setVerticalSyncEnabled(true);
-
+	
     sf::View view;
     view.setSize((sf::Vector2f)window.getSize());
     view.setCenter(sf::Vector2f(0, 0));
+	float zoom = 1.f;
+	view.zoom(zoom);
 	
 	sf::View guiView;
     guiView.setCenter(sf::Vector2f(0, 0));
@@ -44,10 +52,22 @@ int main(){
 	if(!characterTexture.loadFromFile("res/characters.png")) return 1;
 	if(!characterTexture.generateMipmap()) return 1;
 	
+	sf::Texture itemTexture;
+	if(!itemTexture.loadFromFile("res/items.png")) return 1;
+	if(!itemTexture.generateMipmap()) return 1;
+	
 	sf::Texture shadowTexture;
 	if(!shadowTexture.loadFromFile("res/shadow.png")) return 1;
 	if(!shadowTexture.generateMipmap()) return 1;
+	
+	sf::Texture fogTexture;
+	if(!fogTexture.loadFromFile("res/fog.png")) return 1;
+	sf::Sprite fogSprite(fogTexture,{ {0,0}, {1600,900} });
+	
+	sf::RectangleShape nightRect;
+	nightRect.setFillColor(sf::Color::Blue);
 
+	
 	sf::Font font;
 	if(!font.openFromFile("res/tuffy.ttf")) return 1;
 
@@ -72,11 +92,30 @@ int main(){
 	Controls::addButton(sf::Keyboard::Key::A);
 	Controls::addButton(sf::Keyboard::Key::S);
 	Controls::addButton(sf::Keyboard::Key::D);
+	Controls::addButton(sf::Mouse::Button::Left);
+	Controls::addButton(sf::Mouse::Button::Right);
+	
+	Controls::addButton(sf::Keyboard::Key::Num1);
+	Controls::addButton(sf::Keyboard::Key::Num2);
+	Controls::addButton(sf::Keyboard::Key::Num3);
+	Controls::addButton(sf::Keyboard::Key::Num4);
+	Controls::addButton(sf::Keyboard::Key::Num5);
+	Controls::addButton(sf::Keyboard::Key::E);
+	Controls::addButton(sf::Keyboard::Key::F);
+	
+	
+	Inventory inventory( sf::Vector2f(0.f,0.f) );
 	
 	Noise::generate();
 	Procedural::generateLevel(background,frontTiles);
-	Player::all.push_back( Player() );
-	Decor::all.push_back( Decor( {100.f,50.f}, {24.f,24.f}, {32,80}, sf::IntRect{ {32,0}, {64,96} } ));
+	sf::Angle windAngle = sf::degrees(0.f);
+	Player::all.push_back( Player( {1600.f,1600.f} ) );
+	Campfire::all.push_back( Campfire( {100.f,100.f} ) );
+	Plant::all.push_back( Plant({1600.f+50.f,1600.f+50.f}, Plant::Type::Grass) );
+	
+	//Decor::all.push_back( Decor( {100.f,50.f}, {24.f,24.f}, {32,80}, sf::IntRect{ {32,0}, {64,96} } ));
+
+	
 
 	// Extra crap
 	sf::Text gameOverText(font);
@@ -99,9 +138,15 @@ int main(){
             else if (const auto* resized = event->getIf<sf::Event::Resized>())
             {
                 view.setSize((sf::Vector2f)resized->size);
+				view.zoom(zoom);
             }
             else if (const auto* mouseWheelScrolled = event->getIf<sf::Event::MouseWheelScrolled>()) {
-                view.zoom(mouseWheelScrolled->delta == 1 ? 0.9f : (1/0.9f));
+                // view.zoom(mouseWheelScrolled->delta == 1 ? 0.9f : (1/0.9f));
+				zoom += (mouseWheelScrolled->delta == 1) ? -0.1f : 0.1f;
+				if(zoom > 1.f)  zoom = 1.f;
+				if(zoom < 0.5f) zoom = 0.5f;
+				view.setSize((sf::Vector2f)window.getSize());
+				view.zoom(zoom);
             }
 			else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()){
 				if (keyPressed->scancode == sf::Keyboard::Scan::R){
@@ -118,7 +163,8 @@ int main(){
 		
 		if(window.hasFocus()){
 			Controls::updateKeys();
-			window.clear();
+			Controls::updateMouse();
+			window.clear(sf::Color::White);
 			window.setView(view);
 			// Main Loop code below here:
 
@@ -127,7 +173,16 @@ int main(){
 			
 			// Object step()'s here
 			Entity::stepAll<Player>(Player::all,window,view,characterTexture,frontTiles);
-			Entity::stepAll<Decor>(Decor::all,window,view,characterTexture,frontTiles);			
+			Entity::stepAll<Decor>(Decor::all,window,view,characterTexture,frontTiles);
+			Entity::stepAll<Pickup>(Pickup::all,window,view,itemTexture,frontTiles);
+			Entity::stepAll<Campfire>(Campfire::all,window,view,characterTexture,frontTiles);
+			Entity::stepAll<Plant>(Plant::all,window,view,characterTexture,frontTiles);
+			
+			// Make Snow
+			Particles::snow(view);
+			windAngle += sf::degrees(0.05f*DeltaTime::get());
+			Particles::setWindDirection(windAngle);
+			
 			
 			// Draw background stuff
 			background.draw(window,backTileset);
@@ -136,7 +191,7 @@ int main(){
 			
 			// Object draw()'s here
 			Entity::drawAll(window);
-			Particles::draw(window);
+			Particles::draw(window,midTiles);
 			
 			// If the player is alive, do block stuffs
 			if(Player::all.size() > 0){
@@ -164,18 +219,25 @@ int main(){
 					window.draw(blockCursor);
 				}
 				
-				if( inRange && sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) ){
+				if( inRange && Controls::tapped(sf::Mouse::Button::Left) ){
 					shadows.setTile( mousePosition, 0 );
 					shadows.render();
 					
-					midTiles.removeTile(mousePosition);
-					midTiles.render();
+					if(midTiles.getTile(mousePosition)->type != Tilemap::Tile::Type::air){
+						midTiles.removeTile(mousePosition);
+						midTiles.render();
+						
+						frontTiles.removeTile(mousePosition);
+						frontTiles.autoTile();
+						frontTiles.render();
+						
+						sf::Vector2f center = fp+(ts/2.f);
+						Pickup::all.push_back( Pickup( center, "Stone" ) );
+						Particles::burst( {center.x,center.y,1.f}, sf::Color(64,64,64) );
+					}
 					
-					frontTiles.removeTile(mousePosition);
-					frontTiles.autoTile();
-					frontTiles.render();
 				}
-				if( (inRange && !tooClose) && sf::Mouse::isButtonPressed(sf::Mouse::Button::Right) ){
+				if( (inRange && !tooClose) && Controls::tapped(sf::Mouse::Button::Right) ){
 					shadows.setTile( mousePosition, 1 );
 					shadows.render();
 					
@@ -186,18 +248,25 @@ int main(){
 					frontTiles.autoTile();
 					frontTiles.render();
 				}
+				if( (inRange && !tooClose) && Controls::tapped(sf::Keyboard::Key::C) ){
+					Campfire::all.push_back( Campfire( mousePosition ) );					
+				}
 			}
 			
 			// Draw foreground stuff
 			frontTiles.draw(window,frontTileset);
-			
-			// Noise::draw(window);
-			// Noise::sample( (sf::Vector2f)window.mapPixelToCoords(sf::Mouse::getPosition(window)) / 300.f );
 
-			guiView.setSize(view.getSize());
+			guiView.setSize((sf::Vector2f)window.getSize());
 			window.setView(guiView);
 			
-			// gameOverText.setPosition( (sf::Vector2f)(window.getSize())/2.f );
+			fogSprite.setPosition( -((sf::Vector2f)window.getSize()/2.f) );
+			fogSprite.setColor(sf::Color(255,255,255,255));
+			fogSprite.setScale( ((sf::Vector2f)window.getSize()).componentWiseDiv(fogSprite.getLocalBounds().size) );
+			window.draw(fogSprite);
+			
+			inventory.draw(window);
+
+			Message::draw(window,guiView,font);
 			if(Player::all.size() <= 0) window.draw(gameOverText);
 		}		
 		
