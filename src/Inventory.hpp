@@ -739,6 +739,20 @@ Inventory::Inventory() {
     x += slot_width;
   }
 
+  // Textures
+  for (int i = 0; i < 5; i++) {
+    int index = i * 6 + 6;
+    sf::Vector2f UpLeft((32 * i), 32), UpRight((32 * (i + 1)), 32),
+        DownLeft((32 * i), 64), DownRight((32 * (i + 1)), 64);
+
+    array[index + 0].texCoords = UpLeft;
+    array[index + 1].texCoords = UpRight;
+    array[index + 2].texCoords = DownRight;
+    array[index + 3].texCoords = DownRight;
+    array[index + 4].texCoords = DownLeft;
+    array[index + 5].texCoords = UpLeft;
+  }
+
   x = start.x;
   y = start.y;
   // Item Layer
@@ -801,6 +815,17 @@ Inventory::Inventory() {
 
   index += 6;
 
+  UpLeft = sf::Vector2f(160, 32);
+  UpRight = sf::Vector2f(192, 32);
+  DownLeft = sf::Vector2f(160, 64);
+  DownRight = sf::Vector2f(192, 64);
+
+  array[index + 0].texCoords = UpLeft;
+  array[index + 1].texCoords = UpRight;
+  array[index + 2].texCoords = DownRight;
+  array[index + 3].texCoords = DownRight;
+  array[index + 4].texCoords = DownLeft;
+  array[index + 5].texCoords = UpLeft;
   UpLeft = sf::Vector2f{x + border_width, y + border_height};
   UpRight = sf::Vector2f{x + SLOT_SIZE - border_width, y + border_height};
   DownLeft = sf::Vector2f{x + border_width, y + SLOT_SIZE - border_height};
@@ -945,7 +970,6 @@ Inventory::Inventory() {
   x = start.x;
   y = start.y;
 
-  UpLeft = sf::Vector2f{start.x, start.y};
   UpRight = sf::Vector2f{start.x + SLOT_SIZE, start.y};
   DownLeft = sf::Vector2f{start.x, start.y + SLOT_SIZE};
   DownRight = sf::Vector2f{start.x + SLOT_SIZE, start.y + SLOT_SIZE};
@@ -985,6 +1009,18 @@ Inventory::Inventory() {
     hotbar[index + 3].color = sf::Color(SLOT_COLOR);
     hotbar[index + 4].color = sf::Color(SLOT_COLOR);
     hotbar[index + 5].color = sf::Color(SLOT_COLOR);
+
+    UpLeft = sf::Vector2f((32 * slot), 32);
+    UpRight = sf::Vector2f((32 * (slot + 1)), 32);
+    DownLeft = sf::Vector2f((32 * slot), 64);
+    DownRight = sf::Vector2f((32 * (slot + 1)), 64);
+
+    hotbar[index + 0].texCoords = UpLeft;
+    hotbar[index + 1].texCoords = UpRight;
+    hotbar[index + 2].texCoords = DownRight;
+    hotbar[index + 3].texCoords = DownRight;
+    hotbar[index + 4].texCoords = DownLeft;
+    hotbar[index + 5].texCoords = UpLeft;
     x += SLOT_SIZE;
   }
 
