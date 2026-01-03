@@ -6,6 +6,7 @@
 #include "Entity.hpp"
 #include "Tilemap.hpp"
 #include "Particles.hpp"
+#include "Inventory.hpp"
 
 #include<list>
 using std::list;
@@ -35,6 +36,9 @@ public:
 		move(tilemap);
 		
 		
+		// Near a campfire
+		
+		
 		
 		// Move Camera
 		view.move( (position-view.getCenter())/1.f );
@@ -54,6 +58,9 @@ public:
 		Entity::submitSprite(sprite);
 		
 	}
+	
+	static inline Inventory inventory;
+	
 	
 	static inline list<Player> all;
 };

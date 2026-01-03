@@ -22,10 +22,14 @@ public:
 	}
 
 	virtual void step(sf::RenderWindow &window, sf::View &view, sf::Texture &texture, Tilemap &tilemap){
+		Item item = ITEM(type,1);
+		
 		if(Player::all.size() > 0){
 			Player *player = &Player::all.front();
 			if( collision(*player) ){
 				dead = true;
+				
+				Player::inventory.addItem(item);
 				Message::send("Picked up " + type + ".");
 				return;
 			}
@@ -53,7 +57,6 @@ public:
 		sprite.setOrigin( {16.f,16.f} );
 		sprite.move( sf::Vector2f(0.f,-z) );
 		
-		Item item = ITEM(type,1);
 		int tx = item.getTexturePosition().x;
 		sprite.setTextureRect( sf::IntRect{ {tx,0}, {32,32} } );
 		

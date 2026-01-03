@@ -18,11 +18,12 @@
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <array>
-#include <bitset>
 #include <cstdint>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <bitset>
+
 
 // TODO:
 // Need to work out what is needed for equipment/hotbar
@@ -150,7 +151,7 @@ private:
   // void DrawCrafting(sf::RenderWindow);
 
 public:
-  Inventory(sf::Vector2f);
+  Inventory();
   ~Inventory();
   bool isOpen();
   void toggleOpen();
@@ -177,9 +178,11 @@ public:
 
   void draw(sf::RenderWindow &);
   void drawCrafting(sf::RenderWindow &);
+  
+  // static inline Inventory inventory;
 };
 
-static Inventory inventory(sf::Vector2f{0, 0});
+// static Inventory inventory(sf::Vector2f{0, 0});
 ////////////////////////////////////////////////////////////////////////////////
 // Private Methods
 ////////////////////////////////////////////////////////////////////////////////
@@ -537,7 +540,9 @@ int Inventory::getCraftingFromPosition(sf::Vector2i pos) {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Constructor
-Inventory::Inventory(sf::Vector2f vec) {
+Inventory::Inventory() {
+
+	sf::Vector2f vec(0.f,0.f);
 
   // Init buttons needed
   Controls::addButton(sf::Keyboard::Key::E);
@@ -1288,8 +1293,8 @@ void Inventory::draw(sf::RenderWindow &window) {
         equipment = Item();
         updateTextures(FLOATING_INDEX);
         updateTextures(EQUIPMENT_INDEX);
-        PlayerStats.defense -= floating_item.getDefenseGained();
-        PlayerStats.cold_resist -= floating_item.getColdResist();
+        StatsContainer::stats.defense -= floating_item.getDefenseGained();
+        StatsContainer::stats.cold_resist -= floating_item.getColdResist();
         moving = true;
       } else if (slot_filled[index]) {
         moving = true;
@@ -1328,10 +1333,10 @@ void Inventory::draw(sf::RenderWindow &window) {
           updateTextures(FLOATING_INDEX);
           updateTextures(EQUIPMENT_INDEX);
 
-          PlayerStats.defense -= floating_item.getDefenseGained();
-          PlayerStats.cold_resist -= floating_item.getColdResist();
-          PlayerStats.defense += equipment.getDefenseGained();
-          PlayerStats.cold_resist += equipment.getColdResist();
+          StatsContainer::stats.defense -= floating_item.getDefenseGained();
+          StatsContainer::stats.cold_resist -= floating_item.getColdResist();
+          StatsContainer::stats.defense += equipment.getDefenseGained();
+          StatsContainer::stats.cold_resist += equipment.getColdResist();
         }
       } else {
         if (index == -1) {

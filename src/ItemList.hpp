@@ -7,6 +7,8 @@
 #include <map>
 #include <sstream>
 
+#include "Player.hpp"
+
 #define DEFAULT_MAX_STACK_SIZE 99
 
 // A macro for building off of the item list
@@ -114,20 +116,20 @@ std::map<std::string, Item> ItemList{
 ////////////////////////////////////////////////////////////////////////////////
 void consumable_action(Item *item) {
 
-  PlayerStats.health += item->getHpGained();
-  PlayerStats.hunger += item->getHungerGained();
-  PlayerStats.warmth += item->getWarmthGained();
+  StatsContainer::stats.health += item->getHpGained();
+  StatsContainer::stats.hunger += item->getHungerGained();
+  StatsContainer::stats.warmth += item->getWarmthGained();
 
-  if (PlayerStats.health > PlayerStats.max_health) {
-    PlayerStats.health = PlayerStats.max_health;
+  if (StatsContainer::stats.health > StatsContainer::stats.max_health) {
+    StatsContainer::stats.health = StatsContainer::stats.max_health;
   }
 
-  if (PlayerStats.hunger > PlayerStats.max_hunger) {
-    PlayerStats.hunger = PlayerStats.max_hunger;
+  if (StatsContainer::stats.hunger > StatsContainer::stats.max_hunger) {
+    StatsContainer::stats.hunger = StatsContainer::stats.max_hunger;
   }
 
-  if (PlayerStats.warmth > PlayerStats.max_warmth) {
-    PlayerStats.warmth = PlayerStats.max_warmth;
+  if (StatsContainer::stats.warmth > StatsContainer::stats.max_warmth) {
+    StatsContainer::stats.warmth = StatsContainer::stats.max_warmth;
   }
 }
 

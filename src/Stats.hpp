@@ -52,7 +52,12 @@ private:
   sf::VertexArray array;
 };
 
-static Stats PlayerStats;
+class StatsContainer{
+public:
+	static inline Stats stats;
+};
+
+// static Stats PlayerStats;
 
 Stats::Stats()
     : old_health(100), old_hunger(100), old_warmth(100), max_health(100),
